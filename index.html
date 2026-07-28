@@ -1038,8 +1038,8 @@
       <div class="modal-box">
         <div class="mb-5 flex items-start justify-between">
           <div>
-            <h3 class="text-lg font-bold text-slate-900">Add Event</h3>
-            <p class="text-sm text-slate-500 mt-0.5"><span>Create a new debt or payment event.</span></p>
+            <h3 id="modal-event-header-title" class="text-lg font-bold text-slate-900">Add Event</h3>
+            <p id="modal-event-header-desc" class="text-sm text-slate-500 mt-0.5"><span>Create a new debt or payment event.</span></p>
           </div>
           <button onclick="closeModal('eventModal')" class="text-slate-400 hover:text-slate-700 text-xl leading-none">&times;</button>
         </div>
@@ -1103,8 +1103,8 @@
       <div class="modal-box">
         <div class="mb-5 flex items-start justify-between">
           <div>
-            <h3 class="text-lg font-bold text-slate-900">Add Detail</h3>
-            <p class="text-sm text-slate-500 mt-0.5"><span>Attach a detail item to an existing event.</span></p>
+            <h3 id="modal-item-header-title" class="text-lg font-bold text-slate-900">Add Detail</h3>
+            <p id="modal-item-header-desc" class="text-sm text-slate-500 mt-0.5"><span>Attach a detail item to an existing event.</span></p>
           </div>
           <button onclick="closeModal('detailModal')" class="text-slate-400 hover:text-slate-700 text-xl leading-none">&times;</button>
         </div>
@@ -2066,6 +2066,8 @@
       }
 
       function openEventModal() {
+        document.getElementById('modal-event-header-title').textContent = 'Add Event';
+        document.getElementById('modal-event-header-desc').textContent = 'Create a new debt or payment event.';
         document.getElementById('event-form').reset();
         clearFieldErrors('event-form');
         document.getElementById('modal-event-id').value = '';
@@ -2073,6 +2075,8 @@
       }
 
       function openDetailModal() {
+        document.getElementById('modal-item-header-title').textContent = 'Add Detail';
+        document.getElementById('modal-item-header-desc').textContent = 'Attach a detail item to an existing event.';
         populateDetailEvents();
         document.getElementById('detail-form').reset();
         clearFieldErrors('detail-form');
@@ -2717,6 +2721,8 @@
         }
 
       function openEditEventModal(eventId) {
+        document.getElementById('modal-event-header-title').textContent = 'Edit Event';
+        document.getElementById('modal-event-header-desc').textContent = 'Modify an existing debt or payment event.';
         const event = globalEvents.find(e => e.id === eventId);
         if(!event) return;
         document.getElementById('event-form').reset();
@@ -2733,6 +2739,8 @@
       }
 
       function openEditItemModal(itemId, encodedDesc, amount) {
+        document.getElementById('modal-item-header-title').textContent = 'Edit Detail';
+        document.getElementById('modal-item-header-desc').textContent = 'Modify an existing detail item.';
         const desc = decodeURIComponent(encodedDesc);
         populateDetailEvents();
         document.getElementById('detail-form').reset();
