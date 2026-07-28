@@ -1423,6 +1423,12 @@
       /* ═══════════════════════════
          FORMATTING HELPERS
          ═══════════════════════════ */
+      function escapeHTML(str) {
+        return String(str || '').replace(/[&<>'"]/g, tag => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+        }[tag] || tag));
+      }
+
       function fmt(value) {
         return '$' + Number(value || 0).toLocaleString('en-US', { minimumFractionDigits: 0 });
       }
@@ -1583,7 +1589,7 @@
               <td class="px-4 py-3">
                 <div class="flex items-center gap-2">
                   <span class="h-2.5 w-2.5 rounded-full ${isPaid ? 'bg-emerald-400' : (isLend ? 'bg-emerald-500' : 'bg-rose-500')}"></span>
-                  <span class="font-medium ${textClass}">${event.title}</span>
+                  <span class="font-medium ${textClass}" title="${escapeHTML(event.title)}">${escapeHTML(event.title)}</span>
                 </div>
               </td>
               <td class="px-4 py-3 text-right font-semibold ${amountColor}">${amountPrefix}${fmt(eventTotal)}</td>
@@ -1610,11 +1616,11 @@
             <tr class="row-hover ${isPaid ? 'bg-slate-50' : 'bg-white'}">
               <td class="checkbox-col border-none"></td>
               <td colspan="2" class="border-none"></td>
-              <td class="px-4 py-1.5 item-indent ${textClass}">${item.description}</td>
+              <td class="px-4 py-1.5 item-indent ${textClass}" title="${escapeHTML(item.description)}">${escapeHTML(item.description)}</td>
               <td class="px-4 py-1.5 text-right text-slate-600 ${isPaid ? 'line-through' : ''}">${fmt(item.amount)}</td>
               <td colspan="4"></td>
               <td class="px-4 py-1.5 text-center whitespace-nowrap action-col">
-                <button class="action-btn text-slate-400 hover:text-blue-500 mr-2 no-drag" onclick="openEditItemModal('${item.id}', '${item.description.replace(/'/g, "\'")}', ${item.amount})" title="Edit Detail">
+                <button class="action-btn text-slate-400 hover:text-blue-500 mr-2 no-drag" onclick="openEditItemModal('${item.id}', '${escapeHTML(item.description).replace(/'/g, "\\'")}', ${item.amount})" title="Edit Detail">
                   <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                 </button>
                 <button class="action-btn text-slate-400 hover:text-red-500 no-drag" onclick="deleteItem('${item.id}')" title="Delete Detail">

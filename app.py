@@ -31,7 +31,7 @@ app = FastAPI(title="Debt Tracker API", version="4.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:8000", "http://127.0.0.1:8000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -133,7 +133,7 @@ def get_admin_user(req_client: Client = Depends(get_auth_client)):
          raise HTTPException(status_code=403, detail="Forbidden")
     
     try:
-         resp = supabase.table("admin_users").select("*").eq("email", user_email).execute()
+         resp = req_client.table("admin_users").select("*").eq("email", user_email).execute()
          if not resp.data:
              raise HTTPException(status_code=403, detail="Bạn không có quyền Admin")
     except Exception:
@@ -160,13 +160,24 @@ def get_config():
     }
 
 
+import time
+from fastapi import Request
+
+visit_ips = {}
+
 @app.post("/api/visits")
-def record_visit():
+def record_visit(request: Request):
+    client_ip = request.client.host if request.client else "unknown"
+    now = time.time()
+    
+    if client_ip in visit_ips and now - visit_ips[client_ip] < 60:
+        raise HTTPException(status_code=429, detail="Too Many Requests")
+    visit_ips[client_ip] = now
+
     try:
         supabase.table("site_visits").insert({"visited_at": date.today().isoformat()}).execute()
         return {"status": "ok"}
     except Exception:
-        # Ignore errors for visit tracking so it doesn't break frontend
         return {"status": "error"}
 
 
@@ -178,10 +189,10 @@ def check_admin(req_client: Client = Depends(get_admin_user)):
 @app.get("/api/admin/stats")
 def get_admin_stats(req_client: Client = Depends(get_admin_user)):
     try:
-        visits_resp = supabase.table("site_visits").select("id", count="exact").execute()
+        visits_resp = req_client.table("site_visits").select("id", count="exact").execute()
         visits_count = visits_resp.count or 0
         
-        users_resp = supabase.table("events").select("user_id").execute()
+        users_resp = req_client.table("events").select("user_id").execute()
         unique_users = len(set([row.get("user_id") for row in users_resp.data if row.get("user_id")])) if users_resp.data else 0
 
         return {"status": "ok", "data": {"visits": visits_count, "users": unique_users}}
@@ -193,7 +204,7 @@ def get_admin_stats(req_client: Client = Depends(get_admin_user)):
 @app.get("/api/admin/list")
 def get_admin_list(req_client: Client = Depends(get_admin_user)):
     try:
-        resp = supabase.table("admin_users").select("email").execute()
+        resp = req_client.table("admin_users").select("email").execute()
         admins = [row["email"] for row in resp.data]
         return {"status": "ok", "data": admins}
     except Exception:
@@ -208,11 +219,11 @@ def add_admin(payload: AdminAdd, req_client: Client = Depends(get_admin_user)):
             raise HTTPException(status_code=400, detail="Email không được trống")
             
         # Kiểm tra xem đã tồn tại chưa
-        check = supabase.table("admin_users").select("email").eq("email", email).execute()
+        check = req_client.table("admin_users").select("email").eq("email", email).execute()
         if check.data:
             raise HTTPException(status_code=400, detail="Email này đã là Admin")
             
-        supabase.table("admin_users").insert({"email": email}).execute()
+        req_client.table("admin_users").insert({"email": email}).execute()
         return {"status": "ok"}
     except HTTPException:
         raise
@@ -227,7 +238,7 @@ def remove_admin(email: str, req_client: Client = Depends(get_admin_user)):
         if target_email == req_client.user_email.lower():
              raise HTTPException(status_code=400, detail="Bạn không thể tự xóa quyền của chính mình")
              
-        supabase.table("admin_users").delete().eq("email", target_email).execute()
+        req_client.table("admin_users").delete().eq("email", target_email).execute()
         return {"status": "ok"}
     except HTTPException:
         raise
