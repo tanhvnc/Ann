@@ -37,6 +37,43 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+import time
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
+from fastapi import Request
+
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    """
+    Middleware chống spam/DDoS cơ bản bằng cách giới hạn số lượng request
+    từ một IP trong vòng 1 phút (Sliding Window).
+    """
+    def __init__(self, app, requests_per_minute: int = 120):
+        super().__init__(app)
+        self.requests_per_minute = requests_per_minute
+        self.ip_records = {}
+
+    async def dispatch(self, request: Request, call_next):
+        client_ip = request.client.host if request.client else "unknown"
+        now = time.time()
+        
+        if client_ip not in self.ip_records:
+            self.ip_records[client_ip] = []
+            
+        # Xoá các request cũ hơn 60 giây
+        self.ip_records[client_ip] = [req_time for req_time in self.ip_records[client_ip] if now - req_time < 60]
+        
+        # Kiểm tra vượt quá giới hạn (ví dụ: 120 requests/phút)
+        if len(self.ip_records[client_ip]) >= self.requests_per_minute:
+            return JSONResponse(
+                status_code=429, 
+                content={"detail": "Too Many Requests. Hệ thống đang bảo vệ chống DDoS."}
+            )
+            
+        self.ip_records[client_ip].append(now)
+        return await call_next(request)
+
+app.add_middleware(RateLimitMiddleware, requests_per_minute=120)
+
 
 def get_auth_client(authorization: str | None = Header(None)) -> Client:
     """
@@ -484,13 +521,12 @@ def toggle_status(event_id: str, req_client: Client = Depends(get_auth_client)):
             .select("pay_status")
             .eq("id", event_id)
             .eq("user_id", user_id)
-            .single()
             .execute()
         )
         if not current.data:
             raise HTTPException(status_code=404, detail="Không tìm thấy sự kiện")
 
-        current_status = current.data.get("pay_status", "unpaid")
+        current_status = current.data[0].get("pay_status", "unpaid")
         new_status = "paid" if current_status == "unpaid" else "unpaid"
         new_actual_pay_date = date.today().strftime("%Y-%m-%d") if new_status == "paid" else None
 
