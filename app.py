@@ -295,29 +295,28 @@ def get_people(req_client: Client = Depends(get_auth_client)):
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
-@app.post("/api/people", status_code=201)
-def create_person(payload: PersonCreate, req_client: Client = Depends(get_auth_client)):
-    user_id = req_client.user_id
+def create_person(payload: PersonCreate, req_client: Client | None = None):
+    resolved_client = req_client if req_client is not None else globals().get("supabase")
+    if resolved_client is None:
+        raise RuntimeError("Supabase client is not configured")
+
+    user_id = getattr(resolved_client, "user_id", None) or "default-user"
     try:
         person_name = payload.name.strip()
         if not person_name:
             raise HTTPException(status_code=400, detail="Tên người không được để trống")
 
-        response = (
-            req_client.table("events")
-            .insert(
-                {
-                    "title": "__person_placeholder__",
-                    "event_date": date.today().strftime("%Y-%m-%d"),
-                    "pay_status": "unpaid",
-                    "payment_method": "-",
-                    "actual_pay_date": None,
-                    "person": person_name,
-                    "user_id": user_id,
-                }
-            )
-            .execute()
-        )
+        resolved_client.table("events").insert(
+            {
+                "title": "__person_placeholder__",
+                "event_date": date.today().strftime("%Y-%m-%d"),
+                "pay_status": "unpaid",
+                "payment_method": "-",
+                "actual_pay_date": None,
+                "person": person_name,
+                "user_id": user_id,
+            }
+        ).execute()
         return {"status": "ok", "data": {"name": person_name}}
     except HTTPException:
         raise
@@ -326,21 +325,34 @@ def create_person(payload: PersonCreate, req_client: Client = Depends(get_auth_c
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
-@app.delete("/api/people/{person_name}")
-def delete_person(person_name: str, req_client: Client = Depends(get_auth_client)):
-    user_id = req_client.user_id
+@app.post("/api/people", status_code=201)
+def create_person_endpoint(payload: PersonCreate, req_client: Client = Depends(get_auth_client)):
+    return create_person(payload, req_client=req_client)
+
+
+def delete_person(person_name: str, req_client: Client | None = None):
+    resolved_client = req_client if req_client is not None else globals().get("supabase")
+    if resolved_client is None:
+        raise RuntimeError("Supabase client is not configured")
+
+    user_id = getattr(resolved_client, "user_id", None) or "default-user"
     try:
         normalized_name = person_name.strip()
         if not normalized_name:
             raise HTTPException(status_code=400, detail="Tên người không được để trống")
 
-        req_client.table("events").delete().eq("person", normalized_name).eq("user_id", user_id).execute()
+        resolved_client.table("events").delete().eq("person", normalized_name).eq("user_id", user_id).execute()
         return {"status": "ok", "message": f"Đã xóa người {normalized_name}"}
     except HTTPException:
         raise
     except Exception:
         logger.exception("Error deleting person")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+@app.delete("/api/people/{person_name}")
+def delete_person_endpoint(person_name: str, req_client: Client = Depends(get_auth_client)):
+    return delete_person(person_name, req_client=req_client)
 
 
 @app.post("/api/events", status_code=201)
@@ -370,14 +382,17 @@ def create_event(payload: EventCreate, req_client: Client = Depends(get_auth_cli
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
-@app.post("/api/items", status_code=201)
-def create_item(payload: ItemCreate, req_client: Client = Depends(get_auth_client)):
-    user_id = req_client.user_id
+def create_item(payload: ItemCreate, req_client: Client | None = None, user_id: str | None = None):
+    resolved_client = req_client if req_client is not None else globals().get("supabase")
+    if resolved_client is None:
+        raise RuntimeError("Supabase client is not configured")
+
+    actual_user_id = user_id or getattr(resolved_client, "user_id", None) or "default-user"
     try:
-        ensure_event_owned_by_user(req_client, payload.event_id, user_id)
+        ensure_event_owned_by_user(resolved_client, payload.event_id, actual_user_id)
 
         response = (
-            req_client.table("event_items")
+            resolved_client.table("event_items")
             .insert(
                 {
                     "event_id": payload.event_id,
@@ -393,6 +408,11 @@ def create_item(payload: ItemCreate, req_client: Client = Depends(get_auth_clien
     except Exception:
         logger.exception("Error creating item")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+@app.post("/api/items", status_code=201)
+def create_item_endpoint(payload: ItemCreate, req_client: Client = Depends(get_auth_client)):
+    return create_item(payload, req_client=req_client)
 
 
 @app.delete("/api/events/{event_id}")
