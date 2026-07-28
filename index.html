@@ -2150,7 +2150,18 @@
          ═══════════════════════════ */
       async function toggleStatus(eventId) {
         try {
-          const response = await authFetch(`${API}/api/events/${eventId}/toggle-status`, { method: 'PUT' });
+          // Lấy ngày hiện tại theo MÚI GIỜ CỦA TRÌNH DUYỆT người dùng
+          // (không dùng server date để tránh sai lệch giữa VN/US/...)
+          const now = new Date();
+          const localDate = now.getFullYear() + '-'
+            + String(now.getMonth() + 1).padStart(2, '0') + '-'
+            + String(now.getDate()).padStart(2, '0');
+
+          const response = await authFetch(`${API}/api/events/${eventId}/toggle-status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ client_date: localDate }),
+          });
           if (!response.ok) throw new Error(await response.text());
           const json = await response.json();
           const status = json.data?.pay_status || 'unpaid';

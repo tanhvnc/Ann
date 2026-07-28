@@ -542,8 +542,14 @@ def delete_item(item_id: str, req_client: Client = Depends(get_auth_client)):
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
+class ToggleStatusPayload(BaseModel):
+    client_date: str | None = None  # YYYY-MM-DD gửi từ trình duyệt của người dùng
+
+    _validate_date = field_validator("client_date")(validate_date_format)
+
+
 @app.put("/api/events/{event_id}/toggle-status")
-def toggle_status(event_id: str, req_client: Client = Depends(get_auth_client)):
+def toggle_status(event_id: str, payload: ToggleStatusPayload = ToggleStatusPayload(), req_client: Client = Depends(get_auth_client)):
     user_id = req_client.user_id
     try:
         current = (
@@ -558,7 +564,13 @@ def toggle_status(event_id: str, req_client: Client = Depends(get_auth_client)):
 
         current_status = current.data[0].get("pay_status", "unpaid")
         new_status = "paid" if current_status == "unpaid" else "unpaid"
-        new_actual_pay_date = date.today().strftime("%Y-%m-%d") if new_status == "paid" else None
+        
+        # Sử dụng ngày do trình duyệt của người dùng gửi lên để đúng múi giờ của họ
+        # (tránh trường hợp server UTC trả về ngày khác với người dùng VN hay Mỹ)
+        if new_status == "paid":
+            new_actual_pay_date = payload.client_date or date.today().strftime("%Y-%m-%d")
+        else:
+            new_actual_pay_date = None
 
         response = (
             req_client.table("events")
