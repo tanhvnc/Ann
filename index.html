@@ -1057,12 +1057,14 @@
           </div>
           <div>
             <label class="mb-1 block text-sm font-medium text-slate-700">Method</label>
-            <select id="modal-event-method" class="form-input">
+            <select id="modal-event-method" class="form-input" onchange="toggleCustomMethod()">
               <option value="None">None</option>
-              <option value="Zelle">Zelle</option>
+              <option value="Card">Card</option>
               <option value="Cash">Cash</option>
-              <option value="Bank Transfer">Bank Transfer</option>
+              <option value="Transfer">Transfer</option>
+              <option value="Custom">Custom</option>
             </select>
+            <input type="text" id="modal-event-custom-method" class="form-input mt-2 hidden" placeholder="Enter custom method..." />
           </div>
           <div>
             <label class="mb-2 block text-sm font-medium text-slate-700"><span>Transaction Type</span></label>
@@ -2069,6 +2071,8 @@
         document.getElementById('modal-event-header-title').textContent = 'Add Event';
         document.getElementById('modal-event-header-desc').textContent = 'Create a new debt or payment event.';
         document.getElementById('event-form').reset();
+        const customInput = document.getElementById('modal-event-custom-method');
+        if (customInput) customInput.classList.add('hidden');
         clearFieldErrors('event-form');
         document.getElementById('modal-event-id').value = '';
         openModal('eventModal');
@@ -2151,6 +2155,17 @@
         return valid;
       }
 
+      function toggleCustomMethod() {
+        const methodSelect = document.getElementById('modal-event-method');
+        const customInput = document.getElementById('modal-event-custom-method');
+        if (methodSelect.value === 'Custom') {
+          customInput.classList.remove('hidden');
+          customInput.focus();
+        } else {
+          customInput.classList.add('hidden');
+        }
+      }
+
       async function submitEvent() {
         if (!validateEventForm()) return;
 
@@ -2162,7 +2177,10 @@
 
         const title  = document.getElementById('modal-event-title').value.trim();
         const date   = document.getElementById('modal-event-date').value;
-        const method = document.getElementById('modal-event-method').value;
+        let method = document.getElementById('modal-event-method').value;
+        if (method === 'Custom') {
+            method = document.getElementById('modal-event-custom-method').value.trim() || 'None';
+        }
         const debtType = document.querySelector('input[name="debt_type"]:checked')?.value || 'borrow';
 
         try {
@@ -2729,7 +2747,21 @@
         document.getElementById('modal-event-id').value = eventId;
         document.getElementById('modal-event-title').value = event.title;
         document.getElementById('modal-event-date').value = event.event_date;
-        document.getElementById('modal-event-method').value = event.payment_method;
+        
+        const methodSelect = document.getElementById('modal-event-method');
+        const customInput = document.getElementById('modal-event-custom-method');
+        const standardMethods = ['None', 'Card', 'Cash', 'Transfer'];
+        
+        if (event.payment_method && !standardMethods.includes(event.payment_method)) {
+            methodSelect.value = 'Custom';
+            customInput.value = event.payment_method;
+            customInput.classList.remove('hidden');
+        } else {
+            methodSelect.value = event.payment_method || 'None';
+            customInput.value = '';
+            customInput.classList.add('hidden');
+        }
+
         if(event.debt_type === 'lend') {
             document.querySelector('input[name="debt_type"][value="lend"]').checked = true;
         } else {
