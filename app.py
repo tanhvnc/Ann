@@ -192,8 +192,14 @@ def get_admin_stats(req_client: Client = Depends(get_admin_user)):
         visits_resp = req_client.table("site_visits").select("id", count="exact").execute()
         visits_count = visits_resp.count or 0
         
-        users_resp = req_client.table("events").select("user_id").execute()
-        unique_users = len(set([row.get("user_id") for row in users_resp.data if row.get("user_id")])) if users_resp.data else 0
+        try:
+            # Optimal way: count from a dedicated profiles table
+            users_resp = req_client.table("profiles").select("id", count="exact").execute()
+            unique_users = users_resp.count or 0
+        except Exception:
+            # Fallback: count distinct users in events if profiles table is not yet created
+            users_resp = req_client.table("events").select("user_id").execute()
+            unique_users = len(set([row.get("user_id") for row in users_resp.data if row.get("user_id")])) if users_resp.data else 0
 
         return {"status": "ok", "data": {"visits": visits_count, "users": unique_users}}
     except Exception:
