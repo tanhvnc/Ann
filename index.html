@@ -1813,7 +1813,7 @@
                   label: ctx => {
                     const val = ctx.raw;
                     const type = val > 0 ? 'They owe me' : 'I owe them';
-                    return \` \${type}: \${fmt(Math.abs(val))}\`;
+                    return ` ${type}: ${fmt(Math.abs(val))}`;
                   },
                 },
               },
