@@ -1058,7 +1058,6 @@
           <div>
             <label class="mb-1 block text-sm font-medium text-slate-700">Method</label>
             <select id="modal-event-method" class="form-input" onchange="toggleCustomMethod()">
-              <option value="None">None</option>
               <option value="Card">Card</option>
               <option value="Cash">Cash</option>
               <option value="Transfer">Transfer</option>
@@ -2179,7 +2178,7 @@
         const date   = document.getElementById('modal-event-date').value;
         let method = document.getElementById('modal-event-method').value;
         if (method === 'Custom') {
-            method = document.getElementById('modal-event-custom-method').value.trim() || 'None';
+            method = document.getElementById('modal-event-custom-method').value.trim() || 'Card';
         }
         const debtType = document.querySelector('input[name="debt_type"]:checked')?.value || 'borrow';
 
@@ -2750,14 +2749,14 @@
         
         const methodSelect = document.getElementById('modal-event-method');
         const customInput = document.getElementById('modal-event-custom-method');
-        const standardMethods = ['None', 'Card', 'Cash', 'Transfer'];
+        const standardMethods = ['Card', 'Cash', 'Transfer'];
         
-        if (event.payment_method && !standardMethods.includes(event.payment_method)) {
+        if (event.payment_method && !standardMethods.includes(event.payment_method) && event.payment_method !== 'None') {
             methodSelect.value = 'Custom';
             customInput.value = event.payment_method;
             customInput.classList.remove('hidden');
         } else {
-            methodSelect.value = event.payment_method || 'None';
+            methodSelect.value = event.payment_method === 'None' || !event.payment_method ? 'Card' : event.payment_method;
             customInput.value = '';
             customInput.classList.add('hidden');
         }
