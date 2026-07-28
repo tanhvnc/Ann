@@ -884,12 +884,22 @@
 
           <!-- Balance Chart -->
           <div class="chart-card">
-            <h2 class="text-base font-bold text-slate-800 mb-1"><span>Balance by Event</span></h2>
+            <h2 class="text-base font-bold text-slate-800 dark:text-slate-100 mb-1"><span>Balance by Event</span></h2>
             <p class="text-xs text-slate-400 mb-4"><span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 mr-1"></span>They owe me &nbsp;<span class="inline-block w-2.5 h-2.5 rounded-full bg-rose-500 mr-1 ml-2"></span>I owe them</p>
             <div style="width: 100%; margin: 0 auto;">
               <canvas id="debtChart"></canvas>
             </div>
             <p id="chart-empty" class="hidden text-center text-sm text-slate-400 py-10"><span>No data to display.</span></p>
+          </div>
+
+          <!-- Comparison by Person Chart -->
+          <div id="peopleChartContainer" class="chart-card mt-6">
+            <h2 class="text-base font-bold text-slate-800 dark:text-slate-100 mb-1"><span>Comparison by Person</span></h2>
+            <p class="text-xs text-slate-400 mb-4">Compare total debts across all people.</p>
+            <div style="width: 100%; margin: 0 auto;">
+              <canvas id="peopleChart"></canvas>
+            </div>
+            <p id="people-chart-empty" class="hidden text-center text-sm text-slate-400 py-10"><span>No data to display.</span></p>
           </div>
         </div>
 
@@ -1202,6 +1212,7 @@
 
       let globalEvents   = [];
       let chartInstance   = null;
+      let peopleChartInstance = null;
       let calendarInstance = null;
       let currentView     = 'home';
 
@@ -1847,6 +1858,101 @@
             }
           },
         });
+
+        // ─── Comparison by Person Chart ───
+        const peopleContainer = document.getElementById('peopleChartContainer');
+        const peopleCanvas = document.getElementById('peopleChart');
+        const peopleEmptyMsg = document.getElementById('people-chart-empty');
+
+        // Only show if viewing "All"
+        if (state.currentPerson && state.currentPerson !== 'All') {
+          peopleContainer.style.display = 'none';
+        } else {
+          peopleContainer.style.display = 'block';
+
+          if (peopleChartInstance) {
+            peopleChartInstance.destroy();
+            peopleChartInstance = null;
+          }
+
+          // Aggregate by person
+          const personTotals = {};
+          globalEvents.forEach(event => {
+            const person = event.person;
+            if (!personTotals[person]) {
+              personTotals[person] = { borrow: 0, lend: 0 };
+            }
+            const total = getEventTotal(event);
+            if (event.debt_type === 'lend') {
+              personTotals[person].lend += total;
+            } else {
+              personTotals[person].borrow += total;
+            }
+          });
+
+          const pLabels = Object.keys(personTotals);
+          
+          if (pLabels.length === 0) {
+            peopleCanvas.style.display = 'none';
+            peopleEmptyMsg.classList.remove('hidden');
+          } else {
+            peopleCanvas.style.display = 'block';
+            peopleEmptyMsg.classList.add('hidden');
+
+            const pBorrowData = pLabels.map(p => personTotals[p].borrow);
+            const pLendData = pLabels.map(p => personTotals[p].lend);
+
+            peopleChartInstance = new Chart(peopleCanvas, {
+              type: 'bar',
+              data: {
+                labels: pLabels,
+                datasets: [
+                  {
+                    label: 'I owe them',
+                    data: pBorrowData,
+                    backgroundColor: '#f43f5e',
+                    borderRadius: 4
+                  },
+                  {
+                    label: 'They owe me',
+                    data: pLendData,
+                    backgroundColor: '#10b981',
+                    borderRadius: 4
+                  }
+                ]
+              },
+              options: {
+                responsive: true,
+                plugins: {
+                  legend: { 
+                    position: 'top',
+                    labels: {
+                      font: { family: 'Inter' }
+                    }
+                  },
+                  tooltip: {
+                    backgroundColor: '#1e293b',
+                    titleFont: { family: 'Inter', weight: '600' },
+                    bodyFont: { family: 'Inter' },
+                    padding: 12,
+                    cornerRadius: 10,
+                    callbacks: {
+                      label: ctx => ` ${ctx.dataset.label}: ${fmt(ctx.raw)}`
+                    }
+                  }
+                },
+                scales: {
+                  x: { grid: { display: false } },
+                  y: {
+                    beginAtZero: true,
+                    grid: { color: '#f1f5f9' },
+                    ticks: { callback: val => fmt(val) }
+                  }
+                }
+              }
+            });
+          }
+        }
       }
 
       /* ═══════════════════════════
