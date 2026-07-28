@@ -2249,14 +2249,14 @@
           delBtn.title = `Delete ${person}`;
               delBtn.onclick = async (e) => {
             e.stopPropagation();
-            if (!confirm(\`CẢNH BÁO: Bạn có chắc muốn xóa người "\${person}" không? Việc này sẽ xóa VĨNH VIỄN toàn bộ sự kiện và lịch sử nợ của người này!\`)) return;
-            const confirmName = prompt(\`Để xác nhận xóa, vui lòng gõ lại tên "\${person}":\`);
+            if (!confirm(`CẢNH BÁO: Bạn có chắc muốn xóa người "${person}" không? Việc này sẽ xóa VĨNH VIỄN toàn bộ sự kiện và lịch sử nợ của người này!`)) return;
+            const confirmName = prompt(`Để xác nhận xóa, vui lòng gõ lại tên "${person}":`);
             if (confirmName !== person) {
                 showToast('Tên không khớp. Đã hủy xóa.', 'error');
                 return;
             }
             try {
-              const response = await authFetch(\`\${API}/api/people/\${encodeURIComponent(person)}\`, { method: 'DELETE' });
+              const response = await authFetch(`${API}/api/people/${encodeURIComponent(person)}`, { method: 'DELETE' });
               const json = await response.json();
               if (!response.ok) throw new Error(json.detail || 'Failed to delete person');
 
