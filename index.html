@@ -685,8 +685,9 @@
         }
       }
     </style>
+  <!-- SortableJS -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Supabase JS (do NOT duplicate — already loaded in <head>) -->
 </head>
 
   <body>
@@ -881,10 +882,11 @@
             </div>
           </div>
 
-          <!-- Doughnut Chart -->
+          <!-- Balance Chart -->
           <div class="chart-card">
-            <h2 class="text-base font-bold text-slate-800 mb-4"><span>Debt by Event</span></h2>
-            <div style="max-width: 420px; margin: 0 auto;">
+            <h2 class="text-base font-bold text-slate-800 mb-1"><span>Balance by Event</span></h2>
+            <p class="text-xs text-slate-400 mb-4"><span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 mr-1"></span>They owe me &nbsp;<span class="inline-block w-2.5 h-2.5 rounded-full bg-rose-500 mr-1 ml-2"></span>I owe them</p>
+            <div style="width: 100%; margin: 0 auto;">
               <canvas id="debtChart"></canvas>
             </div>
             <p id="chart-empty" class="hidden text-center text-sm text-slate-400 py-10"><span>No data to display.</span></p>
@@ -1211,30 +1213,34 @@
           const config = await configRes.json();
           if (config.supabaseUrl && config.supabaseKey && window.supabase) {
             supabaseClient = window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
-            
-            // Listen for auth state changes
-            supabaseClient.auth.onAuthStateChange((event, session) => {
+
+            // Check initial session FIRST, then set up listener
+            // This prevents race condition where both getSession + onAuthStateChange fire loadApp()
+            const { data } = await supabaseClient.auth.getSession();
+            currentUserSession = data.session;
+
+            if (currentUserSession) {
+              closeModal('authModal');
+              updateUserProfile();
+              await loadApp();
+            } else {
+              openModal('authModal');
+            }
+
+            // Listen for subsequent auth state changes (login/logout)
+            supabaseClient.auth.onAuthStateChange(async (event, session) => {
+              // Skip INITIAL_SESSION event — already handled above
+              if (event === 'INITIAL_SESSION') return;
               currentUserSession = session;
               if (session) {
                 closeModal('authModal');
                 updateUserProfile();
-                loadApp();
+                await loadApp();
               } else {
                 openModal('authModal');
                 document.getElementById('user-profile-badge').classList.add('hidden');
               }
             });
-
-            // Check initial session
-            const { data } = await supabaseClient.auth.getSession();
-            currentUserSession = data.session;
-            if (currentUserSession) {
-              closeModal('authModal');
-              updateUserProfile();
-              loadApp();
-            } else {
-              openModal('authModal');
-            }
           }
         } catch (e) {
           console.error("Auth init error:", e);
@@ -1686,9 +1692,12 @@
           </tr>`;
         table.appendChild(summaryTbody);
         
-        // Initialize Sortable on the table for tbodys
+        // Initialize Sortable — destroy previous instance first to avoid stacking
         if (window.Sortable) {
-          Sortable.create(table, {
+          if (table._sortableInstance) {
+            table._sortableInstance.destroy();
+          }
+          table._sortableInstance = Sortable.create(table, {
             animation: 150,
             draggable: 'tbody.event-group',
             filter: '.no-drag',
@@ -1699,7 +1708,6 @@
                 newOrder.push(tb.getAttribute('data-event-id'));
               });
               localStorage.setItem('eventSortOrder_' + state.currentPerson, JSON.stringify(newOrder));
-              // Re-render to update the No. indices
               renderTable();
             }
           });

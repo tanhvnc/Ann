@@ -29,10 +29,12 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = FastAPI(title="Debt Tracker API", version="4.0.0")
 
+# Allow all origins to support Vercel and other deployment hosts.
+# Security is handled by Supabase JWT token validation on every API call.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8000", "http://127.0.0.1:8000"],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -46,29 +48,46 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     """
     Middleware chống spam/DDoS cơ bản bằng cách giới hạn số lượng request
     từ một IP trong vòng 1 phút (Sliding Window).
+    Có tự dọn dẹp bộ nhớ để tránh memory leak.
     """
-    def __init__(self, app, requests_per_minute: int = 120):
+    def __init__(self, app, requests_per_minute: int = 120, max_tracked_ips: int = 10000):
         super().__init__(app)
         self.requests_per_minute = requests_per_minute
+        self.max_tracked_ips = max_tracked_ips
         self.ip_records = {}
+        self._last_cleanup = time.time()
 
     async def dispatch(self, request: Request, call_next):
         client_ip = request.client.host if request.client else "unknown"
         now = time.time()
-        
+
+        # Dọn dẹp định kỳ mỗi 5 phút để tránh memory leak
+        if now - self._last_cleanup > 300:
+            self._last_cleanup = now
+            self.ip_records = {
+                ip: times for ip, times in self.ip_records.items()
+                if times and now - times[-1] < 60
+            }
+
+        # Nếu đã theo dõi quá nhiều IP, cho qua để tránh từ chối dịch vụ nhầm
         if client_ip not in self.ip_records:
-            self.ip_records[client_ip] = []
-            
+            if len(self.ip_records) < self.max_tracked_ips:
+                self.ip_records[client_ip] = []
+            else:
+                return await call_next(request)
+
         # Xoá các request cũ hơn 60 giây
-        self.ip_records[client_ip] = [req_time for req_time in self.ip_records[client_ip] if now - req_time < 60]
-        
-        # Kiểm tra vượt quá giới hạn (ví dụ: 120 requests/phút)
+        self.ip_records[client_ip] = [
+            t for t in self.ip_records[client_ip] if now - t < 60
+        ]
+
+        # Kiểm tra vượt quá giới hạn
         if len(self.ip_records[client_ip]) >= self.requests_per_minute:
             return JSONResponse(
-                status_code=429, 
+                status_code=429,
                 content={"detail": "Too Many Requests. Hệ thống đang bảo vệ chống DDoS."}
             )
-            
+
         self.ip_records[client_ip].append(now)
         return await call_next(request)
 
@@ -200,13 +219,18 @@ def get_config():
 import time
 from fastapi import Request
 
-visit_ips = {}
+visit_ips: dict[str, float] = {}
 
 @app.post("/api/visits")
 def record_visit(request: Request):
     client_ip = request.client.host if request.client else "unknown"
     now = time.time()
-    
+
+    # Dọn dẹp các IP cũ hơn 60 giây để tránh memory leak
+    global visit_ips
+    if len(visit_ips) > 5000:
+        visit_ips = {ip: ts for ip, ts in visit_ips.items() if now - ts < 60}
+
     if client_ip in visit_ips and now - visit_ips[client_ip] < 60:
         raise HTTPException(status_code=429, detail="Too Many Requests")
     visit_ips[client_ip] = now
