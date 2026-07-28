@@ -1635,7 +1635,7 @@
               <td class="px-4 py-1.5 text-right text-slate-600 ${isPaid ? 'line-through' : ''}">${fmt(item.amount)}</td>
               <td colspan="4"></td>
               <td class="px-4 py-1.5 text-center whitespace-nowrap action-col">
-                <button class="action-btn text-slate-400 hover:text-blue-500 mr-2 no-drag" onclick="openEditItemModal('${item.id}', '${escapeHTML(item.description).replace(/'/g, "\\'")}', ${item.amount})" title="Edit Detail">
+                <button class="action-btn text-slate-400 hover:text-blue-500 mr-2 no-drag" onclick="openEditItemModal('${item.id}', '${encodeURIComponent(item.description)}', ${item.amount})" title="Edit Detail">
                   <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                 </button>
                 <button class="action-btn text-slate-400 hover:text-red-500 no-drag" onclick="deleteItem('${item.id}')" title="Delete Detail">
@@ -1761,17 +1761,19 @@
         // Build per-event data
         const labels = [];
         const data = [];
-        const colors = [
-          '#6366f1', '#8b5cf6', '#a78bfa', '#c084fc',
-          '#e879f9', '#f472b6', '#fb7185', '#f97316',
-          '#facc15', '#34d399', '#22d3ee', '#60a5fa',
-        ];
+        const bgColors = [];
 
         globalEvents.forEach(event => {
           const total = getEventTotal(event);
           if (total > 0) {
             labels.push(event.title);
-            data.push(total);
+            if (event.debt_type === 'lend') {
+              data.push(total);
+              bgColors.push('#10b981'); // emerald-500
+            } else {
+              data.push(-total);
+              bgColors.push('#f43f5e'); // rose-500
+            }
           }
         });
 
@@ -1785,30 +1787,22 @@
         emptyMsg.classList.add('hidden');
 
         chartInstance = new Chart(canvas, {
-          type: 'doughnut',
+          type: 'bar',
           data: {
             labels,
             datasets: [{
+              label: 'Balance',
               data,
-              backgroundColor: colors.slice(0, data.length),
+              backgroundColor: bgColors,
+              borderRadius: 6,
               borderWidth: 0,
-              hoverOffset: 8,
             }],
           },
           options: {
             responsive: true,
-            cutout: '65%',
+            indexAxis: 'y', // horizontal bar chart
             plugins: {
-              legend: {
-                position: 'bottom',
-                labels: {
-                  padding: 18,
-                  usePointStyle: true,
-                  pointStyleWidth: 10,
-                  font: { family: 'Inter', size: 12, weight: '500' },
-                  color: '#475569',
-                },
-              },
+              legend: { display: false },
               tooltip: {
                 backgroundColor: '#1e293b',
                 titleFont: { family: 'Inter', weight: '600' },
@@ -1817,13 +1811,24 @@
                 cornerRadius: 10,
                 callbacks: {
                   label: ctx => {
-                    const total = data.reduce((s, v) => s + v, 0);
-                    const pct = total > 0 ? ((ctx.raw / total) * 100).toFixed(1) : 0;
-                    return ` ${ctx.label}: ${fmt(ctx.raw)} (${pct}%)`;
+                    const val = ctx.raw;
+                    const type = val > 0 ? 'They owe me' : 'I owe them';
+                    return \` \${type}: \${fmt(Math.abs(val))}\`;
                   },
                 },
               },
             },
+            scales: {
+              x: {
+                grid: { color: '#f1f5f9' },
+                ticks: {
+                  callback: (val) => fmt(Math.abs(val))
+                }
+              },
+              y: {
+                grid: { display: false }
+              }
+            }
           },
         });
       }
@@ -2007,9 +2012,9 @@
           valid = false;
         }
 
-        if (!amount || Number(amount) <= 0) {
+        if (!amount || isNaN(amount) || Number(amount) <= 0) {
           amountInput.classList.add('error');
-          amountError.textContent = 'Amount must be greater than 0.';
+          amountError.textContent = 'Vui lòng nhập số tiền hợp lệ (lớn hơn 0).';
           valid = false;
         }
 
@@ -2244,9 +2249,14 @@
           delBtn.title = `Delete ${person}`;
               delBtn.onclick = async (e) => {
             e.stopPropagation();
-            if (!confirm(`Bạn có chắc muốn xóa người "${person}" không?`)) return;
+            if (!confirm(\`CẢNH BÁO: Bạn có chắc muốn xóa người "\${person}" không? Việc này sẽ xóa VĨNH VIỄN toàn bộ sự kiện và lịch sử nợ của người này!\`)) return;
+            const confirmName = prompt(\`Để xác nhận xóa, vui lòng gõ lại tên "\${person}":\`);
+            if (confirmName !== person) {
+                showToast('Tên không khớp. Đã hủy xóa.', 'error');
+                return;
+            }
             try {
-              const response = await authFetch(`${API}/api/people/${encodeURIComponent(person)}`, { method: 'DELETE' });
+              const response = await authFetch(\`\${API}/api/people/\${encodeURIComponent(person)}\`, { method: 'DELETE' });
               const json = await response.json();
               if (!response.ok) throw new Error(json.detail || 'Failed to delete person');
 
@@ -2585,7 +2595,8 @@
         openModal('eventModal');
       }
 
-      function openEditItemModal(itemId, desc, amount) {
+      function openEditItemModal(itemId, encodedDesc, amount) {
+        const desc = decodeURIComponent(encodedDesc);
         populateDetailEvents();
         document.getElementById('detail-form').reset();
         document.getElementById('modal-item-id').value = itemId;

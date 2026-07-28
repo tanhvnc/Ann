@@ -378,6 +378,11 @@ def delete_person(person_name: str, req_client: Client | None = None):
         if not normalized_name:
             raise HTTPException(status_code=400, detail="Tên người không được để trống")
 
+        events_resp = resolved_client.table("events").select("id").eq("person", normalized_name).eq("user_id", user_id).execute()
+        if events_resp.data:
+            event_ids = [e["id"] for e in events_resp.data]
+            resolved_client.table("event_items").delete().in_("event_id", event_ids).execute()
+
         resolved_client.table("events").delete().eq("person", normalized_name).eq("user_id", user_id).execute()
         return {"status": "ok", "message": f"Đã xóa người {normalized_name}"}
     except HTTPException:
@@ -456,6 +461,7 @@ def create_item_endpoint(payload: ItemCreate, req_client: Client = Depends(get_a
 def delete_event(event_id: str, req_client: Client = Depends(get_auth_client)):
     user_id = req_client.user_id
     try:
+        req_client.table("event_items").delete().eq("event_id", event_id).execute()
         req_client.table("events").delete().eq("id", event_id).eq("user_id", user_id).execute()
         return {"status": "ok", "message": f"Đã xóa sự kiện {event_id}"}
     except Exception:
