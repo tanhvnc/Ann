@@ -217,6 +217,18 @@ def get_admin_list(req_client: Client = Depends(get_admin_user)):
         raise HTTPException(status_code=500, detail="Lỗi lấy danh sách Admin")
 
 
+@app.get("/api/admin/all_users")
+def get_all_users(req_client: Client = Depends(get_admin_user)):
+    try:
+        # Fetch from profiles table
+        resp = req_client.table("profiles").select("email, full_name, created_at").order("created_at", desc=True).execute()
+        return {"status": "ok", "data": resp.data or []}
+    except Exception:
+        # Fallback if profiles is somehow empty or errors out
+        return {"status": "ok", "data": []}
+
+
+
 @app.post("/api/admin/add")
 def add_admin(payload: AdminAdd, req_client: Client = Depends(get_admin_user)):
     try:
