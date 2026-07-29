@@ -11,6 +11,7 @@ import re
 from fastapi import FastAPI, HTTPException, Header, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 from supabase import Client, create_client, ClientOptions
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -164,6 +165,29 @@ def root():
 @app.get("/logo1.png")
 def get_logo():
     return FileResponse(os.path.join(os.path.dirname(__file__), "logo1.png"))
+
+
+@app.get("/style.css")
+def get_style():
+    return FileResponse(os.path.join(os.path.dirname(__file__), "style.css"))
+
+
+@app.get("/app.js")
+def get_app_js():
+    return FileResponse(os.path.join(os.path.dirname(__file__), "app.js"))
+
+
+@app.get("/manifest.json")
+def get_manifest():
+    return FileResponse(os.path.join(os.path.dirname(__file__), "manifest.json"))
+
+
+@app.get("/sw.js")
+def get_sw():
+    return FileResponse(os.path.join(os.path.dirname(__file__), "sw.js"))
+
+
+app.mount("/libs", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "libs")), name="libs")
 
 
 @app.get("/api/config")
