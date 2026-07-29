@@ -753,7 +753,7 @@
           <span class="text-[10px] font-semibold leading-none text-slate-500">Admin</span>
         </button>
 
-        <button class="nav-btn" id="nav-export" onclick="exportToCSV()" data-tooltip="Export CSV">
+        <button class="nav-btn" id="nav-export" onclick="openModal('backupModal')" data-tooltip="Backup & Export">
           <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         </button>
 
@@ -1063,6 +1063,47 @@
 <div class="flex justify-end gap-2 pt-2">
             <button type="button" onclick="closeModal('printModal')" class="rounded-2xl border border-slate-200 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">Cancel</button>
             <button type="button" onclick="executePrint()" class="rounded-2xl bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition">Print Now</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════  MODAL: BACKUP & EXPORT  ═══════════════ -->
+    <div id="backupModal" class="modal-overlay" style="z-index: 1000">
+      <div class="modal-box bg-white/95 border border-white/40 dark:bg-slate-900/90 dark:border-white/5 max-w-md">
+        <div class="mb-5 flex items-start justify-between">
+          <div>
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Backup & Export</h3>
+            <p class="text-sm text-slate-500 mt-0.5">Manage data backups and exports.</p>
+          </div>
+          <button onclick="closeModal('backupModal')" class="text-slate-400 hover:text-slate-700 text-xl leading-none">&times;</button>
+        </div>
+        <div class="space-y-4">
+          <!-- Export Options -->
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40">
+            <h4 class="font-semibold text-sm text-slate-800 dark:text-slate-200 mb-2">Export Data</h4>
+            <div class="flex gap-2">
+              <button type="button" onclick="exportToCSV(); closeModal('backupModal');" class="flex-1 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition">
+                📥 Export CSV
+              </button>
+              <button type="button" onclick="exportToJSON(); closeModal('backupModal');" class="flex-1 rounded-xl bg-indigo-600 hover:bg-indigo-700 px-4 py-2.5 text-xs font-semibold text-white transition">
+                💾 Export JSON
+              </button>
+            </div>
+          </div>
+          
+          <!-- Import Option -->
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40">
+            <h4 class="font-semibold text-sm text-slate-800 dark:text-slate-200 mb-2">Import / Restore JSON</h4>
+            <p class="text-xs text-slate-500 mb-3">Upload your JSON backup to restore your events. <span class="text-rose-500 font-semibold">Warning: This will merge/overwrite existing events.</span></p>
+            <label class="block">
+              <span class="sr-only">Choose backup file</span>
+              <input type="file" id="json-backup-file" accept=".json" onchange="importFromJSON(event)" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-slate-700 dark:file:text-slate-200" />
+            </label>
+          </div>
+
+          <div class="flex justify-end pt-2">
+            <button type="button" onclick="closeModal('backupModal')" class="rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">Close</button>
           </div>
         </div>
       </div>
@@ -2134,8 +2175,23 @@
          FETCH DATA — Single source of truth
          ═══════════════════════════ */
       async function fetchData(personName) {
-        renderSkeleton();
         const effectivePerson = personName || state.currentPerson || 'All';
+        const cacheKey = `cached_events_${effectivePerson}`;
+        
+        // 1. Try to render from local cache first for instant load (SWR)
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          try {
+            globalEvents = JSON.parse(cached);
+            renderTable();
+            renderAnalytics();
+            updateCalendarEvents();
+          } catch (e) {
+            console.error('Failed to parse cached events:', e);
+          }
+        } else {
+          renderSkeleton();
+        }
 
         try {
           const url = effectivePerson === 'All' 
@@ -2145,17 +2201,25 @@
           const json = await response.json();
           globalEvents = json.data || [];
 
-          // Sync all views
+          // 2. Cache the fresh data
+          localStorage.setItem(cacheKey, JSON.stringify(globalEvents));
+
+          // Sync all views with fresh data
           renderTable();
           renderAnalytics();
           updateCalendarEvents();
         } catch (error) {
-          document.getElementById('table-body').innerHTML = `
-            <tr>
-              <td colspan="9" class="px-4 py-10 text-center text-sm text-rose-500">
-                Unable to connect to server: ${error.message}
-              </td>
-            </tr>`;
+          console.error(error);
+          if (cached) {
+            showToast('Offline/Cache mode: displaying local data.', 'error');
+          } else {
+            document.getElementById('table-body').innerHTML = `
+              <tr>
+                <td colspan="9" class="px-4 py-10 text-center text-sm text-rose-500">
+                  Unable to connect to server: ${error.message}
+                </td>
+              </tr>`;
+          }
         }
       }
 
@@ -2576,20 +2640,39 @@
          PEOPLE TABS
          ═══════════════════════════ */
       async function loadPeople() {
+        // Try to load from cache first
+        const cached = localStorage.getItem('cached_people');
+        if (cached) {
+          try {
+            state.people = JSON.parse(cached);
+            if (!state.currentPerson && state.people.length > 0) state.currentPerson = state.people[0];
+            else if (!state.people.length) state.currentPerson = 'All';
+            renderPeopleTabs();
+          } catch (e) {
+            console.error('Failed to parse cached people:', e);
+          }
+        }
+
         try {
           const response = await authFetch(`${API}/api/people`);
           const json = await response.json();
           state.people = json.data || [];
           if (!state.people.length) state.people = [];
+          
+          // Cache the fresh people list
+          localStorage.setItem('cached_people', JSON.stringify(state.people));
+          
           if (!state.currentPerson && state.people.length > 0) state.currentPerson = state.people[0];
           else if (!state.people.length) state.currentPerson = 'All';
           renderPeopleTabs();
           return state.people;
         } catch (error) {
           console.error('Failed to load people:', error);
-          state.people = [];
-          state.currentPerson = 'All';
-          renderPeopleTabs();
+          if (!cached) {
+            state.people = [];
+            state.currentPerson = 'All';
+            renderPeopleTabs();
+          }
           return state.people;
         }
       }
@@ -2788,6 +2871,137 @@
         URL.revokeObjectURL(url);
 
         showToast('CSV exported successfully.', 'success');
+      }
+
+      async function exportToJSON() {
+        try {
+          const response = await authFetch(`${API}/api/events`);
+          const json = await response.json();
+          const events = json.data || [];
+          
+          if (events.length === 0) {
+            showToast('No data to export.', 'error');
+            return;
+          }
+
+          const backupData = {
+            backup_version: "1.0",
+            exported_at: new Date().toISOString(),
+            people: state.people,
+            events: events.map(e => ({
+              title: e.title,
+              event_date: e.event_date,
+              payment_method: e.payment_method || '-',
+              person: e.person,
+              debt_type: e.debt_type || 'borrow',
+              pay_status: e.pay_status || 'unpaid',
+              actual_pay_date: e.actual_pay_date || null,
+              event_items: (e.event_items || []).map(item => ({
+                description: item.description,
+                amount: item.amount
+              }))
+            }))
+          };
+
+          const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `debt_tracker_backup_${new Date().toISOString().slice(0, 10)}.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          showToast('JSON backup exported successfully.', 'success');
+        } catch (error) {
+          console.error(error);
+          showToast('Failed to export JSON backup.', 'error');
+        }
+      }
+
+      async function importFromJSON(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          try {
+            const data = JSON.parse(event.target.result);
+            if (!data.events || !Array.isArray(data.events)) {
+              showToast('Invalid backup file structure.', 'error');
+              return;
+            }
+
+            const confirmed = await customConfirm(
+              'Import Backup',
+              `Are you sure you want to import ${data.events.length} events from this backup file?`,
+              { confirmText: 'Import' }
+            );
+            if (!confirmed) return;
+
+            showToast('Importing backup... Please wait.', 'success');
+            closeModal('backupModal');
+
+            // 1. Create people if they don't exist
+            if (data.people && Array.isArray(data.people)) {
+              for (const p of data.people) {
+                if (!state.people.includes(p)) {
+                  await authFetch(`${API}/api/people`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: p }),
+                  });
+                }
+              }
+            }
+
+            // 2. Create events & items
+            for (const ev of data.events) {
+              const resEvent = await authFetch(`${API}/api/events`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  title: ev.title,
+                  event_date: ev.event_date,
+                  payment_method: ev.payment_method || '-',
+                  person: ev.person,
+                  debt_type: ev.debt_type || 'borrow',
+                  pay_status: ev.pay_status || 'unpaid',
+                  actual_pay_date: ev.actual_pay_date || null
+                }),
+              });
+              
+              if (resEvent.ok) {
+                const resJson = await resEvent.json();
+                const newEventId = resJson.data?.id;
+                
+                if (newEventId && ev.event_items && Array.isArray(ev.event_items)) {
+                  for (const item of ev.event_items) {
+                    await authFetch(`${API}/api/items`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        event_id: newEventId,
+                        description: item.description,
+                        amount: parseFloat(item.amount)
+                      }),
+                    });
+                  }
+                }
+              }
+            }
+
+            showToast('Backup restored successfully!', 'success');
+            await loadPeople();
+            await fetchData(state.currentPerson);
+          } catch (err) {
+            console.error(err);
+            showToast('Failed to import backup: ' + err.message, 'error');
+          } finally {
+            document.getElementById('json-backup-file').value = '';
+          }
+        };
+        reader.readAsText(file);
       }
 
       /* ═══════════════════════════
