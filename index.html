@@ -2403,10 +2403,10 @@
           delBtn.title = `Delete ${person}`;
               delBtn.onclick = async (e) => {
             e.stopPropagation();
-            if (!confirm(`CẢNH BÁO: Bạn có chắc muốn xóa người "${person}" không? Việc này sẽ xóa VĨNH VIỄN toàn bộ sự kiện và lịch sử nợ của người này!`)) return;
-            const confirmName = prompt(`Để xác nhận xóa, vui lòng gõ lại tên "${person}":`);
+            if (!confirm(`WARNING: Are you sure you want to delete "${person}"? This will PERMANENTLY delete all events and debt history for this person!`)) return;
+            const confirmName = prompt(`To confirm deletion, please type the name "${person}" again:`);
             if (confirmName !== person) {
-                showToast('Tên không khớp. Đã hủy xóa.', 'error');
+                showToast('Name does not match. Deletion cancelled.', 'error');
                 return;
             }
             try {
