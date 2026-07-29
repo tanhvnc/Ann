@@ -1082,14 +1082,9 @@
           <!-- Export Options -->
           <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40">
             <h4 class="font-semibold text-sm text-slate-800 dark:text-slate-200 mb-2">Export Data</h4>
-            <div class="flex gap-2">
-              <button type="button" onclick="exportToCSV(); closeModal('backupModal');" class="flex-1 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition">
-                📥 Export CSV
-              </button>
-              <button type="button" onclick="exportToJSON(); closeModal('backupModal');" class="flex-1 rounded-xl bg-indigo-600 hover:bg-indigo-700 px-4 py-2.5 text-xs font-semibold text-white transition">
-                💾 Export JSON
-              </button>
-            </div>
+            <button type="button" onclick="exportToJSON(); closeModal('backupModal');" class="w-full rounded-xl bg-indigo-600 hover:bg-indigo-700 px-4 py-2.5 text-xs font-semibold text-white transition">
+              💾 Export JSON Backup File
+            </button>
           </div>
           
           <!-- Import Option -->
@@ -2843,35 +2838,6 @@
       /* ═══════════════════════════
          EXPORT CSV
          ═══════════════════════════ */
-      function exportToCSV() {
-        if (!globalEvents.length) {
-          showToast('No data to export.', 'error');
-          return;
-        }
-
-        const header = 'Date,Title,Status,Total Amount';
-        const rows = globalEvents.map(event => {
-          const total = getEventTotal(event);
-          const dateVal  = event.event_date || '';
-          const title    = `"${(event.title || '').replace(/"/g, '""')}"`;
-          const status   = event.pay_status || 'unpaid';
-          return `${dateVal},${title},${status},${total}`;
-        });
-
-        const csv = [header, ...rows].join('\n');
-        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${state.currentPerson || 'debt'}_debt_report.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-
-        showToast('CSV exported successfully.', 'success');
-      }
 
       async function exportToJSON() {
         try {
