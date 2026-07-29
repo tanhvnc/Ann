@@ -745,13 +745,18 @@
                 </div>
               </div>
               
-              <div id="user-profile-badge" class="hidden group flex items-center gap-3 rounded-full bg-white border border-slate-200/80 pl-1.5 pr-4 py-1.5 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-indigo-200 hover:-translate-y-0.5">
+              <div id="user-profile-badge" class="hidden group flex items-center gap-3 rounded-full bg-white border border-slate-200/80 pl-1.5 pr-4 py-1.5 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-indigo-200 hover:-translate-y-0.5 cursor-pointer" onclick="document.getElementById('avatar-upload').click()" title="Đổi ảnh đại diện">
                 <!-- Avatar with animated gradient ring -->
                 <div class="relative flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-[2px]">
-                  <div class="flex h-full w-full items-center justify-center rounded-full bg-white">
+                  <div class="flex h-full w-full items-center justify-center rounded-full bg-white overflow-hidden">
                     <span id="user-initial" class="text-sm font-extrabold uppercase bg-gradient-to-br from-indigo-600 to-purple-600 bg-clip-text text-transparent">?</span>
+                    <img id="user-avatar-img" class="hidden h-full w-full object-cover" src="" alt="Avatar" />
+                  </div>
+                  <div id="avatar-loading" class="hidden absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
+                    <svg class="h-4 w-4 animate-spin text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                   </div>
                 </div>
+                <input type="file" id="avatar-upload" class="hidden" accept="image/*" onchange="uploadAvatar(event)" />
                 <!-- User Info -->
                 <div class="flex flex-col justify-center">
                   <div class="flex items-center gap-1">
@@ -1316,17 +1321,76 @@
         if (!currentUserSession || !currentUserSession.user) return;
         const email = currentUserSession.user.email;
         const fullName = currentUserSession.user.user_metadata?.full_name;
+        const avatarUrl = currentUserSession.user.user_metadata?.avatar_url;
         
         if (email) {
           const badge = document.getElementById('user-profile-badge');
           const initial = document.getElementById('user-initial');
+          const avatarImg = document.getElementById('user-avatar-img');
           const emailDisplay = document.getElementById('user-email-display');
           
           const displayName = fullName || email.split('@')[0];
           
-          initial.textContent = displayName.charAt(0).toUpperCase();
+          if (avatarUrl) {
+            avatarImg.src = avatarUrl + '?t=' + new Date().getTime(); // Prevent caching
+            avatarImg.classList.remove('hidden');
+            initial.classList.add('hidden');
+          } else {
+            initial.textContent = displayName.charAt(0).toUpperCase();
+            avatarImg.classList.add('hidden');
+            initial.classList.remove('hidden');
+          }
+          
           emailDisplay.textContent = displayName;
           badge.classList.remove('hidden');
+        }
+      }
+
+      async function uploadAvatar(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) {
+          showToast('File quá lớn. Vui lòng chọn ảnh dưới 2MB.', 'error');
+          return;
+        }
+        
+        const user = currentUserSession?.user;
+        if (!user) return;
+        
+        const loadingOverlay = document.getElementById('avatar-loading');
+        loadingOverlay.classList.remove('hidden');
+        
+        try {
+          const fileExt = file.name.split('.').pop();
+          const filePath = `${user.id}.${fileExt}`;
+          
+          const { data, error } = await supabaseClient.storage
+            .from('avatars')
+            .upload(filePath, file, { upsert: true });
+            
+          if (error) throw error;
+          
+          const { data: publicUrlData } = supabaseClient.storage
+            .from('avatars')
+            .getPublicUrl(filePath);
+            
+          const avatarUrl = publicUrlData.publicUrl;
+          
+          const { error: updateError } = await supabaseClient.auth.updateUser({
+            data: { avatar_url: avatarUrl }
+          });
+          
+          if (updateError) throw updateError;
+          
+          currentUserSession.user.user_metadata.avatar_url = avatarUrl;
+          updateUserProfile();
+          showToast('Cập nhật ảnh đại diện thành công!', 'success');
+        } catch (error) {
+          console.error('Lỗi upload avatar:', error);
+          showToast('Không thể tải ảnh lên: ' + error.message, 'error');
+        } finally {
+          loadingOverlay.classList.add('hidden');
+          event.target.value = '';
         }
       }
 
