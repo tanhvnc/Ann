@@ -1078,7 +1078,7 @@
           </div>
           <button onclick="closeModal('eventModal')" class="text-slate-400 hover:text-slate-700 text-xl leading-none">&times;</button>
         </div>
-        <form id="event-form" class="space-y-4">
+        <form id="event-form" class="space-y-4" onsubmit="event.preventDefault(); submitEvent();">
           <input type="hidden" id="modal-event-id" value="" />
           <div>
             <label class="mb-1 block text-sm font-medium text-slate-700">Title</label>
@@ -1139,7 +1139,7 @@
           
           <div class="flex justify-end gap-2 pt-2">
             <button type="button" onclick="closeModal('eventModal')" class="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>
-            <button type="button" id="event-save-btn" onclick="submitEvent()" class="rounded-2xl bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition disabled:opacity-70 disabled:cursor-not-allowed">Save</button>
+            <button type="submit" id="event-save-btn" class="rounded-2xl bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition disabled:opacity-70 disabled:cursor-not-allowed">Save</button>
           </div>
         </form>
       </div>
@@ -1155,7 +1155,7 @@
           </div>
           <button onclick="closeModal('detailModal')" class="text-slate-400 hover:text-slate-700 text-xl leading-none">&times;</button>
         </div>
-        <form id="detail-form" class="space-y-4">
+        <form id="detail-form" class="space-y-4" onsubmit="event.preventDefault(); submitDetail();">
           <input type="hidden" id="modal-item-id" value="" />
           <div>
             <label class="mb-1 block text-sm font-medium text-slate-700">Event</label>
@@ -1180,7 +1180,7 @@
           
           <div class="flex justify-end gap-2 pt-2">
             <button type="button" onclick="closeModal('detailModal')" class="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>
-            <button type="button" id="detail-save-btn" onclick="submitDetail()" class="rounded-2xl bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition disabled:opacity-70 disabled:cursor-not-allowed">Save</button>
+            <button type="submit" id="detail-save-btn" class="rounded-2xl bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition disabled:opacity-70 disabled:cursor-not-allowed">Save</button>
           </div>
         </form>
       </div>
@@ -2191,8 +2191,21 @@
             inputEl.value = '';
             errorEl.textContent = '';
             setTimeout(() => inputEl.focus(), 100);
+            
+            inputEl.onkeydown = (e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                confirmBtn.click();
+              }
+            };
+            inputEl.oninput = () => {
+              errorEl.textContent = '';
+              inputEl.classList.remove('border-rose-500');
+            };
           } else {
             inputWrapper.classList.add('hidden');
+            inputEl.onkeydown = null;
+            inputEl.oninput = null;
             setTimeout(() => confirmBtn.focus(), 100);
           }
 
@@ -2237,7 +2250,19 @@
           labelEl.textContent = options.inputLabel || "";
           inputEl.value = options.defaultValue || '';
           errorEl.textContent = '';
+          inputEl.classList.remove('border-rose-500');
           setTimeout(() => inputEl.focus(), 100);
+
+          inputEl.onkeydown = (e) => {
+             if (e.key === 'Enter') {
+                e.preventDefault();
+                confirmBtn.click();
+             }
+          };
+          inputEl.oninput = () => {
+             errorEl.textContent = '';
+             inputEl.classList.remove('border-rose-500');
+          };
 
           confirmBtn.className = "rounded-xl bg-indigo-600 px-6 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition shadow-sm";
           confirmBtn.textContent = options.confirmText || 'OK';
