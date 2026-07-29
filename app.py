@@ -3,15 +3,18 @@ app.py - FastAPI Backend cho Debt Tracker (Hỗ trợ Supabase Auth)
 """
 
 import os
+import time
 from datetime import date
 from dotenv import load_dotenv
 import logging
 import re
-from fastapi import FastAPI, HTTPException, Header, Depends
+from fastapi import FastAPI, HTTPException, Header, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field, field_validator
 from supabase import Client, create_client, ClientOptions
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -39,10 +42,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-import time
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import JSONResponse
-from fastapi import Request
+
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """
@@ -216,8 +216,7 @@ def get_config():
     }
 
 
-import time
-from fastapi import Request
+
 
 visit_ips: dict[str, float] = {}
 
