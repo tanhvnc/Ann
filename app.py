@@ -158,7 +158,7 @@ class EventCreate(BaseModel):
 class ItemCreate(BaseModel):
     event_id: str
     description: str
-    amount: float = Field(gt=0, description="Amount must be greater than zero")
+    amount: float = Field(description="Amount of the item, can be negative for offset")
 
 
 class EventUpdate(BaseModel):
@@ -172,7 +172,7 @@ class EventUpdate(BaseModel):
 
 class ItemUpdate(BaseModel):
     description: str | None = None
-    amount: float | None = Field(default=None, gt=0, description="Amount must be greater than zero")
+    amount: float | None = Field(default=None, description="Amount of the item, can be negative for offset")
 
 
 class PersonCreate(BaseModel):

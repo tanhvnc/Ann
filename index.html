@@ -1124,7 +1124,7 @@
           </div>
           <div>
             <label class="mb-1 block text-sm font-medium text-slate-700">Amount</label>
-            <input id="modal-detail-amount" type="number" min="0" step="0.01" class="form-input" placeholder="0.00" />
+            <input id="modal-detail-amount" type="number" step="0.01" class="form-input" placeholder="0.00" />
             <div id="detail-amount-error" class="form-error"></div>
           </div>
           
@@ -1471,7 +1471,9 @@
       }
 
       function fmt(value) {
-        return '$' + Number(value || 0).toLocaleString('en-US', { minimumFractionDigits: 0 });
+        const num = Number(value || 0);
+        const isNeg = num < 0;
+        return (isNeg ? '-' : '') + '$' + Math.abs(num).toLocaleString('en-US', { minimumFractionDigits: 0 });
       }
 
       function formatDate(value) {
@@ -1633,7 +1635,7 @@
                   <span class="font-medium ${textClass}" title="${escapeHTML(event.title)}">${escapeHTML(event.title)}</span>
                 </div>
               </td>
-              <td class="px-4 py-3 text-right font-semibold ${amountColor}">${amountPrefix}${fmt(eventTotal)}</td>
+              <td class="px-4 py-3 text-right font-semibold ${amountColor}">${amountPrefix}${fmt(Math.abs(eventTotal))}</td>
               <td class="px-4 py-3">${typeBadge}</td>
               <td class="px-4 py-3 text-slate-500">${formatDate(event.pay_date || event.actual_pay_date)}</td>
               <td class="px-4 py-3">
@@ -2145,9 +2147,9 @@
           valid = false;
         }
 
-        if (!amount || isNaN(amount) || Number(amount) <= 0) {
+        if (!amount || isNaN(amount)) {
           amountInput.classList.add('error');
-          amountError.textContent = 'Vui lòng nhập số tiền hợp lệ (lớn hơn 0).';
+          amountError.textContent = 'Vui lòng nhập số tiền hợp lệ.';
           valid = false;
         }
 
