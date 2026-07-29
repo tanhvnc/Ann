@@ -1820,10 +1820,10 @@
         const summaryTbody = document.createElement('tbody');
         summaryTbody.innerHTML = `
           <tr class="summary-row">
-            <td colspan="2" class="px-4 py-3">
+            <td colspan="2" class="px-4 py-3 whitespace-nowrap">
               <span class="text-slate-500 text-xs font-semibold uppercase tracking-wider">Summary</span>
             </td>
-            <td class="px-4 py-3 text-slate-700">
+            <td class="px-4 py-3 text-slate-700 whitespace-nowrap">
               ${events.length} event${events.length !== 1 ? 's' : ''}
               <span class="text-xs font-medium ml-2">
                 <span class="text-amber-600">${unpaidCount} unpaid</span>
@@ -1831,12 +1831,12 @@
                 <span class="text-emerald-600">${paidCount} paid</span>
               </span>
             </td>
-            <td class="px-4 py-3 text-right">
+            <td colspan="2" class="px-4 py-3 text-right whitespace-nowrap">
               <span class="text-rose-600">-${fmt(totalBorrowed)}</span>
               <span class="text-slate-300 mx-1">/</span>
               <span class="text-emerald-600">+${fmt(totalLent)}</span>
             </td>
-            <td colspan="4"></td>
+            <td colspan="3"></td>
             <td class="action-col border-none"></td>
           </tr>`;
         table.appendChild(summaryTbody);
@@ -2597,12 +2597,20 @@
           delBtn.title = `Delete ${person}`;
               delBtn.onclick = async (e) => {
             e.stopPropagation();
-            if (!confirm(`WARNING: Are you sure you want to delete "${person}"? This will PERMANENTLY delete all events and debt history for this person!`)) return;
-            const confirmName = prompt(`To confirm deletion, please type the name "${person}" again:`);
-            if (confirmName !== person) {
-                showToast('Name does not match. Deletion cancelled.', 'error');
-                return;
-            }
+            const confirmed = await customConfirm(
+              'Delete Person',
+              `<div class="space-y-2 text-slate-600 dark:text-slate-300">
+                <p class="font-semibold text-rose-500">WARNING: Are you sure you want to delete "${escapeHTML(person)}"?</p>
+                <p>This will <span class="font-semibold text-rose-600">PERMANENTLY</span> delete all events and debt history for this person!</p>
+              </div>`,
+              {
+                isDanger: true,
+                confirmText: 'Delete Permanently',
+                requireInput: person,
+                inputLabel: `To confirm deletion, please type the name "${escapeHTML(person)}" again:`
+              }
+            );
+            if (!confirmed) return;
             try {
               const response = await authFetch(`${API}/api/people/${encodeURIComponent(person)}`, { method: 'DELETE' });
               const json = await response.json();
