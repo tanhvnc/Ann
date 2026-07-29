@@ -1,4 +1,4 @@
-﻿      /* ─── Global Variables ─── */
+      /* ─── Global Variables ─── */
       const API = window.location.origin;
       let supabaseClient = null;
       let currentUserSession = null;
@@ -145,6 +145,16 @@
         loadingOverlay.classList.remove('hidden');
         
         try {
+          // Dọn dẹp các file ảnh cũ trong thư mục của user này trước khi upload
+          const { data: files } = await supabaseClient.storage
+            .from('avatars')
+            .list(user.id);
+
+          if (files && files.length > 0) {
+            const filesToDelete = files.map(f => `${user.id}/${f.name}`);
+            await supabaseClient.storage.from('avatars').remove(filesToDelete);
+          }
+
           const fileExt = file.name.split('.').pop();
           // Put the avatar in a folder named after the user ID to secure it with RLS policies easily
           const filePath = `${user.id}/avatar.${fileExt}`;
