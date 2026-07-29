@@ -2223,6 +2223,46 @@
         });
       }
 
+      function customPrompt(title, message, options = {}) {
+        return new Promise((resolve) => {
+          document.getElementById('modal-confirm-title').innerHTML = title;
+          document.getElementById('modal-confirm-msg').innerHTML = message;
+          
+          const inputWrapper = document.getElementById('modal-confirm-input-wrapper');
+          const inputEl = document.getElementById('modal-confirm-input');
+          const labelEl = document.getElementById('modal-confirm-input-label');
+          const errorEl = document.getElementById('modal-confirm-input-error');
+          const confirmBtn = document.getElementById('modal-confirm-btn');
+          
+          inputWrapper.classList.remove('hidden');
+          labelEl.textContent = options.inputLabel || "";
+          inputEl.value = options.defaultValue || '';
+          errorEl.textContent = '';
+          setTimeout(() => inputEl.focus(), 100);
+
+          confirmBtn.className = "rounded-xl bg-indigo-600 px-6 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition shadow-sm";
+          confirmBtn.textContent = options.confirmText || 'OK';
+
+          window._currentConfirmResolve = (val) => {
+             resolve(null);
+          };
+
+          confirmBtn.onclick = () => {
+             const val = inputEl.value.trim();
+             if (options.required && !val) {
+                errorEl.textContent = "This field is required.";
+                inputEl.classList.add('border-rose-500');
+                return;
+             }
+             window._currentConfirmResolve = null;
+             closeModal('confirmModal');
+             resolve(val);
+          };
+          
+          openModal('confirmModal');
+        });
+      }
+
       
       function openPrintModal() {
         openModal('printModal');
@@ -2605,9 +2645,7 @@
               </div>`,
               {
                 isDanger: true,
-                confirmText: 'Delete Permanently',
-                requireInput: person,
-                inputLabel: `To confirm deletion, please type the name "${escapeHTML(person)}" again:`
+                confirmText: 'Delete Permanently'
               }
             );
             if (!confirmed) return;
@@ -2659,7 +2697,15 @@
       }
 
       async function addNewPerson() {
-        const name = window.prompt('Enter new person name');
+        const name = await customPrompt(
+          'Add New Person',
+          'Create a new profile to track events and debt history.',
+          {
+            inputLabel: 'Name of the person:',
+            confirmText: 'Add Person',
+            required: true
+          }
+        );
         if (!name) return;
         const trimmedName = name.trim();
         if (!trimmedName) return;
