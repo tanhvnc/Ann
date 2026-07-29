@@ -35,12 +35,7 @@
         html.dark .stat-card,
         html.dark .chart-card,
         html.dark .bg-white { background-color: #0f172a !important; }
-        html.dark .modal-box { 
-            background-color: rgba(15, 23, 42, 0.85) !important; 
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.05) !important;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset !important;
-        }
+
         html.dark .bg-slate-50 { background-color: #111827 !important; }
         html.dark .text-slate-700, html.dark .text-slate-600, html.dark .text-slate-500, html.dark .text-slate-400 { color: #cbd5e1 !important; }
         html.dark .text-slate-900 { color: #f8fafc !important; }
@@ -292,8 +287,7 @@
       .modal-overlay.open { display: flex; }
       .modal-box {
         width: 100%; max-width: 440px;
-        border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.4);
-        background: rgba(255, 255, 255, 0.95); padding: 1.75rem;
+        border-radius: 24px; padding: 1.75rem;
         backdrop-filter: blur(16px);
         box-shadow: 0 25px 60px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
         animation: modalIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -948,7 +942,7 @@
     
     <!-- ═══════════════  MODAL: AUTH (LOGIN / REGISTER)  ═══════════════ -->
     <div id="authModal" class="modal-overlay open" style="backdrop-filter: blur(12px); background: rgba(15, 23, 42, 0.75);">
-      <div class="modal-box max-w-md text-center">
+      <div class="modal-box max-w-md text-center bg-white/95 border border-white/40 dark:bg-slate-900/90 dark:border-white/5">
         <div class="mb-4 inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-50 shadow-inner">
           <img src="/logo1.png" alt="Logo" class="w-12 h-12 object-cover rounded-xl" />
         </div>
@@ -986,7 +980,7 @@
 
     <!-- ═══════════════  MODAL: PRINT OPTIONS  ═══════════════ -->
     <div id="printModal" class="modal-overlay">
-      <div class="modal-box">
+      <div class="modal-box bg-white/95 border border-white/40 dark:bg-slate-900/90 dark:border-white/5">
         <div class="mb-5 flex items-start justify-between">
           <div>
             <h3 class="text-lg font-bold text-slate-900">Print Options</h3>
@@ -1035,7 +1029,7 @@
 
     <!-- ═══════════════  MODAL: ADD EVENT  ═══════════════ -->
     <div id="eventModal" class="modal-overlay">
-      <div class="modal-box">
+      <div class="modal-box bg-white/95 border border-white/40 dark:bg-slate-900/90 dark:border-white/5">
         <div class="mb-5 flex items-start justify-between">
           <div>
             <h3 id="modal-event-header-title" class="text-lg font-bold text-slate-900">Add Event</h3>
@@ -1101,7 +1095,7 @@
 
     <!-- ═══════════════  MODAL: ADD DETAIL  ═══════════════ -->
     <div id="detailModal" class="modal-overlay">
-      <div class="modal-box">
+      <div class="modal-box bg-white/95 border border-white/40 dark:bg-slate-900/90 dark:border-white/5">
         <div class="mb-5 flex items-start justify-between">
           <div>
             <h3 id="modal-item-header-title" class="text-lg font-bold text-slate-900">Add Detail</h3>
@@ -1142,7 +1136,7 @@
 
     <!-- ═══════════════  MODAL: ADMIN DASHBOARD  ═══════════════ -->
     <div id="adminModal" class="modal-overlay">
-      <div class="modal-box !max-w-2xl">
+      <div class="modal-box !max-w-2xl bg-white/95 border border-white/40 dark:bg-slate-900/90 dark:border-white/5">
         <div class="mb-5 flex items-start justify-between">
           <div>
             <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">⚙️ Admin Dashboard</h3>
