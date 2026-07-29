@@ -1363,7 +1363,8 @@
         
         try {
           const fileExt = file.name.split('.').pop();
-          const filePath = `${user.id}.${fileExt}`;
+          // Put the avatar in a folder named after the user ID to secure it with RLS policies easily
+          const filePath = `${user.id}/avatar.${fileExt}`;
           
           const { data, error } = await supabaseClient.storage
             .from('avatars')
