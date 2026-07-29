@@ -1659,7 +1659,6 @@
 
           const childRows = items.map(item => `
             <tr class="row-hover ${isPaid ? 'bg-slate-50' : 'bg-white'}">
-              <td class="checkbox-col border-none"></td>
               <td colspan="2" class="border-none"></td>
               <td class="px-4 py-1.5 item-indent ${textClass}" title="${escapeHTML(item.description)}">${escapeHTML(item.description)}</td>
               <td class="px-4 py-1.5 text-right text-slate-600 ${isPaid ? 'line-through' : ''}">${fmt(item.amount)}</td>
@@ -1696,7 +1695,6 @@
         const summaryTbody = document.createElement('tbody');
         summaryTbody.innerHTML = `
           <tr class="summary-row">
-            <td class="checkbox-col px-4 py-3 border-none"></td>
             <td colspan="2" class="px-4 py-3">
               <span class="text-slate-500 text-xs font-semibold uppercase tracking-wider">Summary</span>
             </td>
