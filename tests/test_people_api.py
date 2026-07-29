@@ -15,6 +15,9 @@ class FakeSupabaseClient:
         self.table_name = table_name
         return self
 
+    def select(self, *args, **kwargs):
+        return self
+
     def insert(self, payload):
         self.inserted_payloads.append(payload)
         return self
@@ -24,6 +27,9 @@ class FakeSupabaseClient:
 
     def eq(self, column, value):
         self.deleted_person = value
+        return self
+
+    def in_(self, column, values):
         return self
 
     def execute(self):
