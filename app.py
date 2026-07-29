@@ -442,9 +442,12 @@ def create_item_endpoint(payload: ItemCreate, req_client: Client = Depends(get_a
 def delete_event(event_id: str, req_client: Client = Depends(get_auth_client)):
     user_id = req_client.user_id
     try:
+        ensure_event_owned_by_user(req_client, event_id, user_id)
         req_client.table("event_items").delete().eq("event_id", event_id).execute()
         req_client.table("events").delete().eq("id", event_id).eq("user_id", user_id).execute()
         return {"status": "ok", "message": f"Đã xóa sự kiện {event_id}"}
+    except HTTPException:
+        raise
     except Exception:
         logger.exception("Error deleting event")
         raise HTTPException(status_code=500, detail="Internal Server Error")
