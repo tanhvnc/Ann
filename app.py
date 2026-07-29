@@ -151,8 +151,10 @@ class EventCreate(BaseModel):
     payment_method: str = "-"
     person: str
     debt_type: str = "borrow"
+    pay_status: str = "unpaid"
+    actual_pay_date: str | None = None
 
-    _validate_date = field_validator("event_date")(validate_date_format)
+    _validate_date = field_validator("event_date", "actual_pay_date")(validate_date_format)
 
 
 class ItemCreate(BaseModel):
@@ -166,8 +168,10 @@ class EventUpdate(BaseModel):
     event_date: str | None = None
     payment_method: str | None = None
     debt_type: str | None = None
+    pay_status: str | None = None
+    actual_pay_date: str | None = None
 
-    _validate_date = field_validator("event_date")(validate_date_format)
+    _validate_date = field_validator("event_date", "actual_pay_date")(validate_date_format)
 
 
 class ItemUpdate(BaseModel):
@@ -431,9 +435,9 @@ def create_event(payload: EventCreate, req_client: Client = Depends(get_auth_cli
                 {
                     "title": payload.title,
                     "event_date": payload.event_date,
-                    "pay_status": "unpaid",
+                    "pay_status": payload.pay_status,
                     "payment_method": payment_method,
-                    "actual_pay_date": None,
+                    "actual_pay_date": payload.actual_pay_date,
                     "person": payload.person,
                     "debt_type": payload.debt_type,
                     "user_id": user_id,

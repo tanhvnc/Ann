@@ -817,7 +817,6 @@
             <table id="events-table" class="min-w-full text-sm">
               <thead class="table-header text-left text-[11px] font-semibold uppercase tracking-[0.24em]">
                 <tr>
-                  <th class="px-4 py-3 checkbox-col"></th>
                   <th class="px-4 py-3 cursor-pointer hover:text-indigo-500 transition-colors" onclick="sortBy('id')">No. <span class="no-print">↕</span></th>
                   <th class="px-4 py-3 cursor-pointer hover:text-indigo-500 transition-colors" onclick="sortBy('date')">Date <span class="no-print">↕</span></th>
                   <th class="px-4 py-3 cursor-pointer hover:text-indigo-500 transition-colors" onclick="sortBy('title')">Description <span class="no-print">↕</span></th>
@@ -1079,6 +1078,17 @@
                 <span class="text-sm font-semibold text-slate-600 dark:text-slate-300"><span>📥 They owe me</span></span>
               </label>
             </div>
+          </div>
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-700">Status</label>
+            <select id="modal-event-status" class="form-input" onchange="togglePayDate()">
+              <option value="unpaid">Unpaid</option>
+              <option value="paid">Paid</option>
+            </select>
+          </div>
+          <div id="modal-event-pay-date-wrapper" class="hidden">
+            <label class="mb-1 block text-sm font-medium text-slate-700">Pay Date</label>
+            <input id="modal-event-pay-date" type="date" class="form-input" />
           </div>
           
           
@@ -1541,7 +1551,6 @@
         if (!tbody) return;
         tbody.innerHTML = Array.from({ length: 5 }, () => `
           <tr>
-            <td class="px-4 py-4"><div class="skeleton h-4 w-5 rounded"></div></td>
             <td class="px-4 py-4"><div class="skeleton h-4 w-8 rounded"></div></td>
             <td class="px-4 py-4"><div class="skeleton h-4 w-24 rounded"></div></td>
             <td class="px-4 py-4"><div class="skeleton h-4 w-40 rounded"></div></td>
@@ -1570,7 +1579,7 @@
           const emptyTbody = document.createElement('tbody');
           emptyTbody.innerHTML = `
             <tr>
-              <td colspan="10" class="empty-state">
+              <td colspan="9" class="empty-state">
                 <div class="empty-state-icon">📋</div>
                 <h3>No events yet</h3>
                 <p>Start by clicking "+ Add Event" to track a new debt or payment.</p>
@@ -1618,9 +1627,6 @@
 
           const parentRow = `
             <tr class="row-hover striped-row ${isPaid ? 'bg-slate-50' : 'bg-white'}" style="cursor: grab;">
-              <td class="px-4 py-3 checkbox-col">
-                <input type="checkbox" class="checkbox-custom no-drag" ${isPaid ? 'checked' : ''} onchange="toggleStatus('${event.id}')" />
-              </td>
               <td class="px-4 py-3 font-semibold text-slate-500">${index + 1}</td>
               <td class="px-4 py-3 whitespace-nowrap text-slate-500">${formatDate(event.event_date)}</td>
               <td class="px-4 py-3">
@@ -2070,6 +2076,8 @@
         if (customInput) customInput.classList.add('hidden');
         clearFieldErrors('event-form');
         document.getElementById('modal-event-id').value = '';
+        document.getElementById('modal-event-status').value = 'unpaid';
+        togglePayDate();
         openModal('eventModal');
       }
 
@@ -2150,6 +2158,13 @@
         return valid;
       }
 
+      function togglePayDate() {
+        const status = document.getElementById('modal-event-status').value;
+        const wrapper = document.getElementById('modal-event-pay-date-wrapper');
+        if (status === 'paid') wrapper.classList.remove('hidden');
+        else wrapper.classList.add('hidden');
+      }
+
       function toggleCustomMethod() {
         const methodSelect = document.getElementById('modal-event-method');
         const customInput = document.getElementById('modal-event-custom-method');
@@ -2172,6 +2187,8 @@
 
         const title  = document.getElementById('modal-event-title').value.trim();
         const date   = document.getElementById('modal-event-date').value;
+        const payStatus = document.getElementById('modal-event-status').value;
+        const actualPayDate = document.getElementById('modal-event-pay-date').value || null;
         let method = document.getElementById('modal-event-method').value;
         if (method === 'Custom') {
             method = document.getElementById('modal-event-custom-method').value.trim() || 'Card';
@@ -2192,6 +2209,8 @@
               payment_method: method || 'None',
               person: state.currentPerson,
               debt_type: debtType,
+              pay_status: payStatus,
+              actual_pay_date: payStatus === 'paid' ? actualPayDate : null,
             }),
           });
 
@@ -2762,6 +2781,9 @@
         } else {
             document.querySelector('input[name="debt_type"][value="borrow"]').checked = true;
         }
+        document.getElementById('modal-event-status').value = event.pay_status || 'unpaid';
+        document.getElementById('modal-event-pay-date').value = event.actual_pay_date || '';
+        togglePayDate();
         openModal('eventModal');
       }
 
