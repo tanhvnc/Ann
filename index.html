@@ -1247,6 +1247,28 @@
       </div>
     </div>
 
+    <!-- ═══════════════  MODAL: CONFIRM  ═══════════════ -->
+    <div id="confirmModal" class="modal-overlay" style="z-index: 1000">
+      <div class="modal-box !max-w-md bg-white/95 border border-white/40 dark:bg-slate-900/90 dark:border-white/5 shadow-2xl">
+        <div class="mb-4 flex items-start justify-between">
+          <h3 id="modal-confirm-title" class="text-xl font-bold text-slate-900 dark:text-white"></h3>
+          <button onclick="closeModal('confirmModal')" class="text-slate-400 hover:text-slate-700 text-xl leading-none">&times;</button>
+        </div>
+        <p id="modal-confirm-msg" class="text-slate-600 dark:text-slate-300 mb-6 leading-relaxed"></p>
+        
+        <div id="modal-confirm-input-wrapper" class="hidden mb-6">
+            <label id="modal-confirm-input-label" class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200"></label>
+            <input id="modal-confirm-input" type="text" class="form-input focus:ring-rose-500 focus:border-rose-500 dark:focus:ring-rose-500" autocomplete="off" />
+            <div id="modal-confirm-input-error" class="form-error text-rose-500 mt-1.5 text-sm font-medium"></div>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <button type="button" onclick="closeModal('confirmModal')" class="rounded-xl border border-slate-200 dark:border-slate-700 px-5 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition">Cancel</button>
+          <button type="button" id="modal-confirm-btn" class="rounded-xl px-6 py-2 text-sm font-semibold text-white transition shadow-sm">Confirm</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ════════════════════════════════════════════════════════════════
          JAVASCRIPT — SINGLE SOURCE OF TRUTH
          ════════════════════════════════════════════════════════════════ -->
@@ -1483,7 +1505,8 @@
       }
 
       async function handleLogout() {
-        if (confirm('Are you sure you want to sign out?')) {
+        const confirmed = await customConfirm('Sign Out', 'Are you sure you want to sign out?', { confirmText: 'Sign Out' });
+        if (confirmed) {
           if (supabaseClient) await supabaseClient.auth.signOut();
           currentUserSession = null;
           openModal('authModal');
@@ -2146,6 +2169,58 @@
 
       function closeModal(modalId) {
         document.getElementById(modalId).classList.remove('open');
+        if (modalId === 'confirmModal' && window._currentConfirmResolve) {
+           window._currentConfirmResolve(false);
+           window._currentConfirmResolve = null;
+        }
+      }
+
+      function customConfirm(title, message, options = {}) {
+        return new Promise((resolve) => {
+          document.getElementById('modal-confirm-title').innerHTML = title;
+          document.getElementById('modal-confirm-msg').innerHTML = message;
+          
+          const inputWrapper = document.getElementById('modal-confirm-input-wrapper');
+          const inputEl = document.getElementById('modal-confirm-input');
+          const labelEl = document.getElementById('modal-confirm-input-label');
+          const errorEl = document.getElementById('modal-confirm-input-error');
+          const confirmBtn = document.getElementById('modal-confirm-btn');
+          
+          if (options.requireInput) {
+            inputWrapper.classList.remove('hidden');
+            labelEl.textContent = options.inputLabel || `Type "${options.requireInput}" to confirm:`;
+            inputEl.value = '';
+            errorEl.textContent = '';
+            setTimeout(() => inputEl.focus(), 100);
+          } else {
+            inputWrapper.classList.add('hidden');
+            setTimeout(() => confirmBtn.focus(), 100);
+          }
+
+          if (options.isDanger) {
+             confirmBtn.className = "rounded-xl bg-rose-600 px-6 py-2 text-sm font-semibold text-white hover:bg-rose-700 transition shadow-sm";
+          } else {
+             confirmBtn.className = "rounded-xl bg-indigo-600 px-6 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition shadow-sm";
+          }
+          confirmBtn.textContent = options.confirmText || 'Confirm';
+
+          window._currentConfirmResolve = resolve;
+
+          confirmBtn.onclick = () => {
+             if (options.requireInput) {
+               if (inputEl.value.trim() !== options.requireInput) {
+                  errorEl.textContent = "Text does not match.";
+                  inputEl.classList.add('border-rose-500');
+                  return;
+               }
+             }
+             window._currentConfirmResolve = null;
+             closeModal('confirmModal');
+             resolve(true);
+          };
+          
+          openModal('confirmModal');
+        });
       }
 
       
@@ -2816,7 +2891,8 @@
       }
 
       async function removeAdmin(email) {
-        if (!confirm(`Are you sure you want to remove admin rights for ${email}?`)) return;
+        const confirmed = await customConfirm('Remove Admin', `Are you sure you want to remove admin rights for <b>${escapeHTML(email)}</b>?`, { isDanger: true, confirmText: 'Remove' });
+        if (!confirmed) return;
         try {
           const res = await authFetch(`${API}/api/admin/remove/${encodeURIComponent(email)}`, {
             method: 'DELETE'
@@ -2905,7 +2981,8 @@
       }
 
       async function deleteEvent(eventId) {
-        if(!confirm('Are you sure you want to delete this event?')) return;
+        const confirmed = await customConfirm('Delete Event', 'Are you sure you want to delete this event? All details will be deleted as well.', { isDanger: true, confirmText: 'Delete' });
+        if(!confirmed) return;
         try {
           const res = await authFetch(`${API}/api/events/${eventId}`, { method: 'DELETE' });
           if(!res.ok) throw new Error(await res.text());
@@ -2915,7 +2992,8 @@
       }
 
       async function deleteItem(itemId) {
-        if(!confirm('Are you sure you want to delete this detail?')) return;
+        const confirmed = await customConfirm('Delete Detail', 'Are you sure you want to delete this detail?', { isDanger: true, confirmText: 'Delete' });
+        if(!confirmed) return;
         try {
           const res = await authFetch(`${API}/api/items/${itemId}`, { method: 'DELETE' });
           if(!res.ok) throw new Error(await res.text());
