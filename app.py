@@ -24,6 +24,7 @@ load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY") or SUPABASE_KEY
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     raise RuntimeError("Thiếu SUPABASE_URL hoặc SUPABASE_KEY trong .env")
@@ -32,66 +33,19 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = FastAPI(title="Debt Tracker API", version="4.0.0")
 
-# Allow all origins to support Vercel and other deployment hosts.
-# Security is handled by Supabase JWT token validation on every API call.
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "*").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True if ALLOWED_ORIGINS != ["*"] else False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
 
-class RateLimitMiddleware(BaseHTTPMiddleware):
-    """
-    Middleware chống spam/DDoS cơ bản bằng cách giới hạn số lượng request
-    từ một IP trong vòng 1 phút (Sliding Window).
-    Có tự dọn dẹp bộ nhớ để tránh memory leak.
-    """
-    def __init__(self, app, requests_per_minute: int = 120, max_tracked_ips: int = 10000):
-        super().__init__(app)
-        self.requests_per_minute = requests_per_minute
-        self.max_tracked_ips = max_tracked_ips
-        self.ip_records = {}
-        self._last_cleanup = time.time()
 
-    async def dispatch(self, request: Request, call_next):
-        client_ip = request.client.host if request.client else "unknown"
-        now = time.time()
-
-        # Dọn dẹp định kỳ mỗi 5 phút để tránh memory leak
-        if now - self._last_cleanup > 300:
-            self._last_cleanup = now
-            self.ip_records = {
-                ip: times for ip, times in self.ip_records.items()
-                if times and now - times[-1] < 60
-            }
-
-        # Nếu đã theo dõi quá nhiều IP, cho qua để tránh từ chối dịch vụ nhầm
-        if client_ip not in self.ip_records:
-            if len(self.ip_records) < self.max_tracked_ips:
-                self.ip_records[client_ip] = []
-            else:
-                return await call_next(request)
-
-        # Xoá các request cũ hơn 60 giây
-        self.ip_records[client_ip] = [
-            t for t in self.ip_records[client_ip] if now - t < 60
-        ]
-
-        # Kiểm tra vượt quá giới hạn
-        if len(self.ip_records[client_ip]) >= self.requests_per_minute:
-            return JSONResponse(
-                status_code=429,
-                content={"detail": "Too Many Requests. Hệ thống đang bảo vệ chống DDoS."}
-            )
-
-        self.ip_records[client_ip].append(now)
-        return await call_next(request)
-
-app.add_middleware(RateLimitMiddleware, requests_per_minute=120)
 
 
 def get_auth_client(authorization: str | None = Header(None)) -> Client:
@@ -146,41 +100,41 @@ def ensure_item_owned_by_user(req_client: Client, item_id: str, user_id: str) ->
 
 
 class EventCreate(BaseModel):
-    title: str
-    event_date: str
-    payment_method: str = "-"
-    person: str
-    debt_type: str = "borrow"
-    pay_status: str = "unpaid"
-    actual_pay_date: str | None = None
+    title: str = Field(..., max_length=150)
+    event_date: str = Field(..., max_length=20)
+    payment_method: str = Field("-", max_length=50)
+    person: str = Field(..., max_length=100)
+    debt_type: str = Field("borrow", max_length=20)
+    pay_status: str = Field("unpaid", max_length=20)
+    actual_pay_date: str | None = Field(None, max_length=20)
 
     _validate_date = field_validator("event_date", "actual_pay_date")(validate_date_format)
 
 
 class ItemCreate(BaseModel):
-    event_id: str
-    description: str
+    event_id: str = Field(..., max_length=50)
+    description: str = Field(..., max_length=200)
     amount: float = Field(description="Amount of the item, can be negative for offset")
 
 
 class EventUpdate(BaseModel):
-    title: str | None = None
-    event_date: str | None = None
-    payment_method: str | None = None
-    debt_type: str | None = None
-    pay_status: str | None = None
-    actual_pay_date: str | None = None
+    title: str | None = Field(None, max_length=150)
+    event_date: str | None = Field(None, max_length=20)
+    payment_method: str | None = Field(None, max_length=50)
+    debt_type: str | None = Field(None, max_length=20)
+    pay_status: str | None = Field(None, max_length=20)
+    actual_pay_date: str | None = Field(None, max_length=20)
 
     _validate_date = field_validator("event_date", "actual_pay_date")(validate_date_format)
 
 
 class ItemUpdate(BaseModel):
-    description: str | None = None
+    description: str | None = Field(None, max_length=200)
     amount: float | None = Field(default=None, description="Amount of the item, can be negative for offset")
 
 
 class PersonCreate(BaseModel):
-    name: str
+    name: str = Field(..., max_length=100)
 
 
 class AdminAdd(BaseModel):
@@ -216,7 +170,7 @@ def get_logo():
 def get_config():
     return {
         "supabaseUrl": SUPABASE_URL,
-        "supabaseKey": SUPABASE_KEY
+        "supabaseKey": SUPABASE_ANON_KEY
     }
 
 
