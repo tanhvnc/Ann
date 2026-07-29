@@ -2,7 +2,14 @@ const CACHE_NAME = 'debt-tracker-v1';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
-  '/logo1.png'
+  '/logo1.png',
+  '/style.css',
+  '/app.js',
+  '/libs/supabase-js.js',
+  '/libs/tailwind.js',
+  '/libs/chart.js',
+  '/libs/fullcalendar.js',
+  '/libs/sortable.js'
 ];
 
 self.addEventListener('install', (event) => {
