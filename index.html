@@ -1823,22 +1823,18 @@
             <td colspan="2" class="px-4 py-3">
               <span class="text-slate-500 text-xs font-semibold uppercase tracking-wider">Summary</span>
             </td>
-            <td colspan="6" class="px-4 py-3">
-              <div class="flex justify-between items-center w-full">
-                <span class="text-slate-700">
-                  ${events.length} event${events.length !== 1 ? 's' : ''}
-                  <span class="text-xs font-medium ml-2">
-                    <span class="text-amber-600">${unpaidCount} unpaid</span>
-                    ·
-                    <span class="text-emerald-600">${paidCount} paid</span>
-                  </span>
-                </span>
-                <span class="whitespace-nowrap text-right">
-                  <span class="text-rose-600">-${fmt(totalBorrowed)}</span>
-                  <span class="text-slate-300 mx-1">/</span>
-                  <span class="text-emerald-600">+${fmt(totalLent)}</span>
-                </span>
-              </div>
+            <td colspan="3" class="px-4 py-3 text-slate-700 whitespace-nowrap">
+              ${events.length} event${events.length !== 1 ? 's' : ''}
+              <span class="text-xs font-medium ml-2">
+                <span class="text-amber-600">${unpaidCount} unpaid</span>
+                ·
+                <span class="text-emerald-600">${paidCount} paid</span>
+              </span>
+            </td>
+            <td colspan="3" class="px-4 py-3 text-right whitespace-nowrap">
+              <span class="text-rose-600">-${fmt(totalBorrowed)}</span>
+              <span class="text-slate-300 mx-1">/</span>
+              <span class="text-emerald-600">+${fmt(totalLent)}</span>
             </td>
             <td class="action-col border-none"></td>
           </tr>`;
