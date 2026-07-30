@@ -1,4 +1,4 @@
-const CACHE_NAME = 'debt-tracker-v1';
+const CACHE_NAME = 'debt-tracker-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -11,6 +11,20 @@ const ASSETS_TO_CACHE = [
   '/libs/fullcalendar.js',
   '/libs/sortable.js'
 ];
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+});
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
