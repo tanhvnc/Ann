@@ -2245,11 +2245,11 @@
           if (isJumping) return;
           isJumping = true; // Prevent multi clicks
 
-          catBubble.textContent = 'Meow! Đang bận nhảy múa rồi! 😾';
+          catBubble.textContent = 'Meow! I\\'m busy dancing right now! 😾';
           catBubble.classList.remove('opacity-0', 'translate-y-2');
           catBubble.classList.add('opacity-100', 'translate-y-0');
 
-          // Đợi 2 giây thoại
+          // Đợi 3 giây thoại
           setTimeout(() => {
             // Chạy đi mất tiêu
             if (catFlip) catFlip.style.transform = 'scaleX(-1)'; // quay mặt sang phải
@@ -2281,6 +2281,6 @@
                 });
               });
             }, 20000); // 20 giây vắng bóng
-          }, 2000); // 2 giây hiển thị thoại
+          }, 3000); // 3 giây hiển thị thoại
         });
       });
