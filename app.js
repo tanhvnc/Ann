@@ -2245,7 +2245,7 @@
           if (isJumping) return;
           isJumping = true; // Prevent multi clicks
 
-          catBubble.textContent = 'Meow! I\\'m busy dancing right now! 😾';
+          catBubble.textContent = "Meow! I'm busy dancing right now! 😾";
           catBubble.classList.remove('opacity-0', 'translate-y-2');
           catBubble.classList.add('opacity-100', 'translate-y-0');
 
