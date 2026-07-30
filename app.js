@@ -2235,6 +2235,7 @@
       document.addEventListener('DOMContentLoaded', () => {
         const catContainer = document.getElementById('lofi-cat-container');
         const catBubble = document.getElementById('cat-speech-bubble');
+        const catFlip = document.getElementById('cat-flip-wrapper');
         
         if (!catContainer) return;
 
@@ -2244,36 +2245,42 @@
           if (isJumping) return;
           isJumping = true; // Prevent multi clicks
 
-          catBubble.textContent = 'ZOOMIES TIME!!! ⚡';
+          catBubble.textContent = 'Meow! Đang bận nhảy múa rồi! 😾';
           catBubble.classList.remove('opacity-0', 'translate-y-2');
           catBubble.classList.add('opacity-100', 'translate-y-0');
 
-          // Make it zip around randomly!
-          catContainer.style.transition = 'transform 0.15s linear';
-          
-          let jumps = 0;
-          const maxJumps = 8;
-          const jumpInterval = setInterval(() => {
-            jumps++;
-            if (jumps <= maxJumps) {
-              // Random position across the screen
-              const x = Math.random() * -80 + 'vw'; // random left (0 to -80vw)
-              const y = Math.random() * -80 + 'vh'; // random up (0 to -80vh)
-              const rot = (Math.random() - 0.5) * 180 + 'deg';
-              catContainer.style.transform = `translate(${x}, ${y}) rotate(${rot})`;
-            } else {
-              clearInterval(jumpInterval);
-              // Zip back to start
-              catContainer.style.transition = 'transform 0.5s ease-out';
-              catContainer.style.transform = 'translate(0, 0) rotate(0deg)';
-              catBubble.textContent = 'Whew... need a nap 💦';
+          // Đợi 2 giây thoại
+          setTimeout(() => {
+            // Chạy đi mất tiêu
+            if (catFlip) catFlip.style.transform = 'scaleX(-1)'; // quay mặt sang phải
+            catContainer.style.transition = 'transform 1s cubic-bezier(0.4, 0, 0.2, 1)';
+            catContainer.style.transform = 'translateX(100vw)'; 
+            
+            // Ẩn thoại
+            setTimeout(() => {
+              catBubble.classList.remove('opacity-100', 'translate-y-0');
+              catBubble.classList.add('opacity-0', 'translate-y-2');
+            }, 500);
+
+            // 20 giây sau quay lại
+            setTimeout(() => {
+              // Reset vị trí về bên trái màn hình
+              catContainer.style.transition = 'none';
+              catContainer.style.transform = 'translateX(-100vw)';
               
-              setTimeout(() => {
-                catBubble.classList.remove('opacity-100', 'translate-y-0');
-                catBubble.classList.add('opacity-0', 'translate-y-2');
-                isJumping = false;
-              }, 2500);
-            }
-          }, 250);
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                  // Chạy về vị trí cũ
+                  if (catFlip) catFlip.style.transform = 'scaleX(1)';
+                  catContainer.style.transition = 'transform 1.5s ease-out';
+                  catContainer.style.transform = 'translateX(0)';
+                  
+                  setTimeout(() => {
+                    isJumping = false;
+                  }, 1500);
+                });
+              });
+            }, 20000); // 20 giây vắng bóng
+          }, 2000); // 2 giây hiển thị thoại
         });
       });
