@@ -441,24 +441,24 @@
         if (!gallery || !detail) return;
 
         if (state.selectedHomeYear) {
-           gallery.style.display = 'none';
-           emptyMsg.style.display = 'none';
-           detail.style.display = 'block';
+           gallery.classList.add('hidden');
+           emptyMsg.classList.add('hidden');
+           detail.classList.remove('hidden');
            
            const titleEl = document.getElementById('detail-year-title');
            if (titleEl) titleEl.textContent = `Year ${state.selectedHomeYear}`;
            
            renderTable();
         } else {
-           detail.style.display = 'none';
+           detail.classList.add('hidden');
            
            if (!globalEvents || globalEvents.length === 0) {
-               gallery.style.display = 'none';
-               emptyMsg.style.display = 'block';
+               gallery.classList.add('hidden');
+               emptyMsg.classList.remove('hidden');
                return;
            }
-           emptyMsg.style.display = 'none';
-           gallery.style.display = 'grid';
+           emptyMsg.classList.add('hidden');
+           gallery.classList.remove('hidden');
            
            const summaries = {};
            globalEvents.forEach(e => {
