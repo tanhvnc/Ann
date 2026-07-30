@@ -76,7 +76,16 @@
       <main class="flex-1 overflow-auto bg-slate-50 relative flex flex-col">
         
         <!-- Cover Image -->
-        <div class="w-full h-48 sm:h-64 shrink-0 bg-cover bg-center border-b border-slate-200 shadow-sm" style="background-image: url('https://images.unsplash.com/photo-1707343843437-caacff5cfa74?auto=format&fit=crop&w=2000&q=80');">
+        <div id="cover-image" class="w-full h-48 sm:h-64 shrink-0 bg-cover bg-center border-b border-slate-200 shadow-sm relative group" style="background-image: url('https://images.unsplash.com/photo-1707343843437-caacff5cfa74?auto=format&fit=crop&w=2000&q=80'); transition: background-image 0.3s ease;">
+          <div id="cover-loading" class="hidden absolute inset-0 bg-black/30 flex items-center justify-center">
+            <svg class="h-8 w-8 animate-spin text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          </div>
+          <!-- Change cover button -->
+          <button type="button" id="change-cover-btn" class="hidden absolute right-4 bottom-4 items-center gap-2 rounded-xl bg-white/80 backdrop-blur border border-white/40 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-white hover:text-indigo-600 transition opacity-0 group-hover:opacity-100" onclick="document.getElementById('cover-upload').click()">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            Đổi ảnh bìa
+          </button>
+          <input type="file" id="cover-upload" class="hidden" accept="image/*" onchange="uploadCover(event)" />
         </div>
 
         <div class="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative flex-1 flex flex-col">

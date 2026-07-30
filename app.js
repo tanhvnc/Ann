@@ -190,6 +190,98 @@
         }
       }
 
+      const DEFAULT_COVER_URL = "https://images.unsplash.com/photo-1707343843437-caacff5cfa74?auto=format&fit=crop&w=2000&q=80";
+
+      async function uploadCover(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+          showToast('File quá lớn. Vui lòng chọn ảnh dưới 5MB.', 'error');
+          return;
+        }
+        
+        const user = currentUserSession?.user;
+        if (!user || !state.currentPerson || state.currentPerson === 'All') return;
+        
+        const loadingOverlay = document.getElementById('cover-loading');
+        if (loadingOverlay) loadingOverlay.classList.remove('hidden');
+        
+        try {
+          const fileExt = file.name.split('.').pop();
+          const safePersonName = encodeURIComponent(state.currentPerson);
+          // Upload to avatars bucket but under covers/ prefix
+          const filePath = `${user.id}/covers/${safePersonName}_${Date.now()}.${fileExt}`;
+          
+          const { data, error } = await supabaseClient.storage
+            .from('avatars')
+            .upload(filePath, file, { upsert: true });
+            
+          if (error) throw error;
+          
+          const { data: publicUrlData } = supabaseClient.storage
+            .from('avatars')
+            .getPublicUrl(filePath);
+            
+          const coverUrl = publicUrlData.publicUrl;
+          
+          // Upsert to person_profiles table
+          const { error: dbError } = await supabaseClient
+            .from('person_profiles')
+            .upsert({
+                user_id: user.id,
+                person_name: state.currentPerson,
+                cover_photo_url: coverUrl
+            }, { onConflict: 'user_id, person_name' });
+
+          if (dbError) throw dbError;
+          
+          // Update UI
+          const coverImageDiv = document.getElementById('cover-image');
+          if (coverImageDiv) {
+              coverImageDiv.style.backgroundImage = `url('${coverUrl}')`;
+          }
+          showToast('Cập nhật ảnh bìa thành công!', 'success');
+        } catch (error) {
+          console.error('Lỗi upload cover:', error);
+          showToast('Không thể tải ảnh lên: ' + error.message, 'error');
+        } finally {
+          if (loadingOverlay) loadingOverlay.classList.add('hidden');
+          event.target.value = '';
+        }
+      }
+
+      async function loadCoverPhoto(personName) {
+        const coverImageDiv = document.getElementById('cover-image');
+        const changeCoverBtn = document.getElementById('change-cover-btn');
+        
+        if (!coverImageDiv) return;
+
+        if (!personName || personName === 'All') {
+            coverImageDiv.style.backgroundImage = `url('${DEFAULT_COVER_URL}')`;
+            if (changeCoverBtn) changeCoverBtn.classList.add('hidden');
+            return;
+        }
+
+        if (changeCoverBtn) changeCoverBtn.classList.remove('hidden');
+
+        try {
+            const { data, error } = await supabaseClient
+              .from('person_profiles')
+              .select('cover_photo_url')
+              .eq('person_name', personName)
+              .single();
+            
+            if (data && data.cover_photo_url) {
+                coverImageDiv.style.backgroundImage = `url('${data.cover_photo_url}')`;
+            } else {
+                coverImageDiv.style.backgroundImage = `url('${DEFAULT_COVER_URL}')`;
+            }
+        } catch (error) {
+            console.error('Lỗi lấy ảnh bìa:', error);
+            coverImageDiv.style.backgroundImage = `url('${DEFAULT_COVER_URL}')`;
+        }
+      }
+
       async function handleAuthSubmit(e) {
         e.preventDefault();
         const email = document.getElementById('auth-email').value.trim();
@@ -1559,6 +1651,7 @@
           updatePrintHeader();
           renderPeopleTabs();
           await fetchData('All');
+          loadCoverPhoto('All');
         };
         allTab.appendChild(allNameBtn);
         container.appendChild(allTab);
@@ -1580,6 +1673,7 @@
             updatePrintHeader();
             renderPeopleTabs();
             await fetchData(person);
+            loadCoverPhoto(person);
           };
 
           const delBtn = document.createElement('button');
@@ -1736,6 +1830,7 @@
         updatePrintHeader();
         renderPeopleTabs();
         await fetchData(state.currentPerson);
+        loadCoverPhoto(state.currentPerson);
         
         // Check admin status on load
         try {
