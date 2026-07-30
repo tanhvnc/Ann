@@ -15,6 +15,7 @@
         currentPerson: '',
         search: '',
         filter: 'all',
+        selectedHomeYear: null,
       };
 
       /* ═══════════════════════════
@@ -367,7 +368,14 @@
           const matchesFilter = state.filter === 'all' || event.pay_status === state.filter;
           const searchText = state.search.trim().toLowerCase();
           const matchesSearch = !searchText || event.title.toLowerCase().includes(searchText);
-          return matchesFilter && matchesSearch;
+          
+          let matchesYear = true;
+          if (state.selectedHomeYear) {
+             const year = event.event_date ? event.event_date.split('-')[0] : 'Unknown';
+             matchesYear = (year === state.selectedHomeYear);
+          }
+          
+          return matchesFilter && matchesSearch && matchesYear;
         });
 
         if (sortConfig.key) {
@@ -421,6 +429,101 @@
             <td class="px-4 py-4"><div class="skeleton h-4 w-16 rounded"></div></td>
           </tr>
         `).join('');
+      }
+
+      /* ═══════════════════════════
+         RENDER HOME VIEW (Gallery or Table)
+         ═══════════════════════════ */
+      function renderHomeView() {
+        const gallery = document.getElementById('home-year-gallery');
+        const detail = document.getElementById('home-year-detail');
+        const emptyMsg = document.getElementById('home-year-empty');
+        if (!gallery || !detail) return;
+
+        if (state.selectedHomeYear) {
+           gallery.style.display = 'none';
+           emptyMsg.style.display = 'none';
+           detail.style.display = 'block';
+           
+           const titleEl = document.getElementById('detail-year-title');
+           if (titleEl) titleEl.textContent = `Year ${state.selectedHomeYear}`;
+           
+           renderTable();
+        } else {
+           detail.style.display = 'none';
+           
+           if (!globalEvents || globalEvents.length === 0) {
+               gallery.style.display = 'none';
+               emptyMsg.style.display = 'block';
+               return;
+           }
+           emptyMsg.style.display = 'none';
+           gallery.style.display = 'grid';
+           
+           const summaries = {};
+           globalEvents.forEach(e => {
+               const year = e.event_date ? e.event_date.split('-')[0] : 'Unknown';
+               if (!summaries[year]) summaries[year] = { count: 0, borrowed: 0, lent: 0, paid: 0 };
+               summaries[year].count++;
+               const total = getEventTotal(e);
+               if (e.debt_type === 'lend') summaries[year].lent += total;
+               else summaries[year].borrowed += total;
+               
+               if (e.pay_status === 'paid') summaries[year].paid++;
+           });
+           
+           const sortedYears = Object.keys(summaries).sort((a,b) => b.localeCompare(a));
+           gallery.innerHTML = sortedYears.map(year => {
+               const s = summaries[year];
+               const progress = s.count > 0 ? (s.paid / s.count) * 100 : 0;
+               return `
+                 <div class="cursor-pointer group relative bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col" onclick="openYear('${year}')">
+                    <div class="h-12 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border-b border-slate-100 flex items-center px-5">
+                       <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider">Year ${year}</span>
+                    </div>
+                    <div class="p-5 flex-1 flex flex-col">
+                       <h3 class="text-xl font-bold text-slate-800 mb-1">${year}</h3>
+                       <p class="text-sm text-slate-500 mb-4">${s.count} Events</p>
+                       
+                       <div class="flex items-center gap-4 mb-4">
+                          <div>
+                            <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Borrowed</p>
+                            <p class="text-sm font-bold text-rose-600">${fmt(s.borrowed)}</p>
+                          </div>
+                          <div>
+                            <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Lent</p>
+                            <p class="text-sm font-bold text-emerald-600">${fmt(s.lent)}</p>
+                          </div>
+                       </div>
+                       
+                       <div class="mt-auto">
+                          <div class="flex justify-between text-xs mb-1.5">
+                            <span class="text-slate-500 font-medium">Completion</span>
+                            <span class="text-slate-700 font-bold">${Math.round(progress)}%</span>
+                          </div>
+                          <div class="w-full bg-slate-100 rounded-full h-1.5">
+                            <div class="bg-indigo-500 h-1.5 rounded-full" style="width: ${progress}%"></div>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+               `;
+           }).join('');
+        }
+      }
+      
+      function openYear(year) {
+         state.selectedHomeYear = year;
+         state.filter = 'all';
+         state.search = '';
+         document.getElementById('filterSelect').value = 'all';
+         document.getElementById('searchInput').value = '';
+         renderHomeView();
+      }
+      
+      function closeYear() {
+         state.selectedHomeYear = null;
+         renderHomeView();
       }
 
       /* ═══════════════════════════
@@ -877,7 +980,7 @@
         if (cached) {
           try {
             globalEvents = JSON.parse(cached);
-            renderTable();
+            renderHomeView();
             renderAnalytics();
             updateCalendarEvents();
           } catch (e) {
@@ -899,7 +1002,7 @@
           localStorage.setItem(cacheKey, JSON.stringify(globalEvents));
 
           // Sync all views with fresh data
-          renderTable();
+          renderHomeView();
           renderAnalytics();
           updateCalendarEvents();
         } catch (error) {
@@ -1450,6 +1553,7 @@
         allNameBtn.textContent = 'All';
         allNameBtn.className = 'person-name px-2';
         allNameBtn.onclick = async () => {
+          state.selectedHomeYear = null;
           state.currentPerson = 'All';
           document.getElementById('header-subtitle').textContent = `To: All`;
           updatePrintHeader();
@@ -1470,6 +1574,7 @@
           nameBtn.textContent = person;
           nameBtn.className = 'person-name';
           nameBtn.onclick = async () => {
+            state.selectedHomeYear = null;
             state.currentPerson = person;
             document.getElementById('header-subtitle').textContent = `To: ${person}`;
             updatePrintHeader();

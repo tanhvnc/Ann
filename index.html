@@ -122,31 +122,41 @@
         <!-- ═══════════════  VIEW: HOME  ═══════════════ -->
         <div id="view-home">
 
-          <!-- Toolbar -->
-          <section class="toolbar mb-5 flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-            <div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
-              <select id="filterSelect" onchange="applyFilter(this.value)" class="w-full sm:w-auto rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 outline-none focus:border-indigo-300">
-                <option value="all">All Status</option>
-                <option value="unpaid">Unpaid</option>
-                <option value="paid">Paid</option>
-              </select>
-              <input id="searchInput" type="search" placeholder="Search by title" class="flex-1 w-full sm:w-auto rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none focus:border-indigo-300" oninput="applySearch(this.value)" />
-            </div>
+          <!-- Top Actions (Persistent) -->
+          <div class="flex flex-wrap justify-end gap-2 mb-5 w-full">
+            <button type="button" onclick="openEventModal()" class="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 shadow-sm">
+              <span>+ Add Event</span>
+            </button>
+            <button type="button" onclick="openDetailModal()" class="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 shadow-sm">
+              <span>+ Add Detail</span>
+            </button>
+            <button type="button" onclick="openPrintModal()" class="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 shadow-sm" title="Print debt ledger">
+              <span>🖨️ Print</span>
+            </button>
+          </div>
 
-            
+          <!-- ═══ YEAR GALLERY ═══ -->
+          <div id="home-year-gallery" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+          <div id="home-year-empty" class="hidden text-center text-sm text-slate-400 py-10">No events found.</div>
 
-            <div class="flex flex-wrap gap-2 w-full sm:w-auto">
-              <button type="button" onclick="openEventModal()" class="flex-1 sm:flex-none rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">
-                <span>+ Add Event</span>
-              </button>
-              <button type="button" onclick="openDetailModal()" class="flex-1 sm:flex-none rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-                <span>+ Add Detail</span>
-              </button>
-              <button type="button" onclick="openPrintModal()" class="flex-1 sm:flex-none rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50" title="Print debt ledger">
-                <span>🖨️ Print</span>
-              </button>
-            </div>
-          </section>
+          <!-- ═══ YEAR DETAIL (Table) ═══ -->
+          <div id="home-year-detail" class="hidden">
+            <!-- Toolbar -->
+            <section class="toolbar mb-5 flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
+                <button type="button" onclick="closeYear()" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 flex items-center gap-1 shadow-sm">
+                  <span>&larr; Back to Years</span>
+                </button>
+                <div class="h-6 w-px bg-slate-200 hidden sm:block"></div>
+                <select id="filterSelect" onchange="applyFilter(this.value)" class="w-full sm:w-auto rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 outline-none focus:border-indigo-300">
+                  <option value="all">All Status</option>
+                  <option value="unpaid">Unpaid</option>
+                  <option value="paid">Paid</option>
+                </select>
+                <input id="searchInput" type="search" placeholder="Search by title" class="flex-1 w-full sm:w-auto rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none focus:border-indigo-300" oninput="applySearch(this.value)" />
+              </div>
+              <h2 id="detail-year-title" class="text-lg font-bold text-slate-800 hidden sm:block"></h2>
+            </section>
 
           <!-- ═══ Print-Only Header (hidden on screen, shown only when printing) ═══ -->
           <div class="print-header">
@@ -179,6 +189,7 @@
               <tbody id="table-body" class="bg-white"></tbody>
             </table>
           </section>
+          </div> <!-- End of home-year-detail -->
 
           <!-- Print-Only Footer -->
           <div class="print-footer" style="display:none;">
