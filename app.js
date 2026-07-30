@@ -2245,41 +2245,28 @@
           if (isRunning) return;
           isRunning = true;
 
-          // Wake up annoyed
+          // Wake up annoyed with a little pop
           catEmoji.textContent = '😾';
+          catEmoji.style.transform = 'scale(1.2) translateY(-10px)';
           catBubble.textContent = 'Meow... lười quá, từ từ hẵng đòi...';
           catBubble.classList.remove('opacity-0', 'translate-y-2');
           catBubble.classList.add('opacity-100', 'translate-y-0');
 
-          // Walk away VERY slowly after 2s
+          // Settle down after 0.3s
+          setTimeout(() => {
+            catEmoji.style.transform = 'scale(1) translateY(0)';
+          }, 300);
+
+          // Go back to sleep after 4s
           setTimeout(() => {
             catEmoji.textContent = '🐈';
-            catContainer.style.transition = 'transform 8s ease-in-out';
-            catContainer.style.transform = 'translateX(150vw)';
             catBubble.classList.remove('opacity-100', 'translate-y-0');
             catBubble.classList.add('opacity-0', 'translate-y-2');
-          }, 2000);
-
-          // Return slowly after 15 seconds
-          setTimeout(() => {
-            // Instantly move to left off-screen
-            catContainer.style.transition = 'none';
-            catContainer.style.transform = 'translateX(-100vw)';
             
-            // Allow browser to apply the transform before reenabling transition
-            requestAnimationFrame(() => {
-              requestAnimationFrame(() => {
-                catContainer.style.transition = 'transform 8s ease-out'; // stroll back in slowly
-                catContainer.style.transform = 'translateX(0)';
-                catEmoji.textContent = '🐈';
-                catBubble.textContent = 'Zzz...';
-                
-                // Allow clicking again only after it has fully returned
-                setTimeout(() => {
-                  isRunning = false;
-                }, 8000);
-              });
-            });
-          }, 15000);
+            // Allow clicking again
+            setTimeout(() => {
+              isRunning = false;
+            }, 500);
+          }, 4000);
         });
       });
