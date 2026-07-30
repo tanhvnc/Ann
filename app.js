@@ -2244,60 +2244,36 @@
           if (isJumping) return;
           isJumping = true; // Prevent multi clicks
 
-          catBubble.textContent = 'Initiating SUPER JUMP in 3... 🚀';
+          catBubble.textContent = 'ZOOMIES TIME!!! ⚡';
           catBubble.classList.remove('opacity-0', 'translate-y-2');
           catBubble.classList.add('opacity-100', 'translate-y-0');
 
-          let count = 3;
-          const countdown = setInterval(() => {
-            count--;
-            if (count > 0) {
-              catBubble.textContent = `Initiating SUPER JUMP in ${count}... 🚀`;
+          // Make it zip around randomly!
+          catContainer.style.transition = 'transform 0.15s linear';
+          
+          let jumps = 0;
+          const maxJumps = 8;
+          const jumpInterval = setInterval(() => {
+            jumps++;
+            if (jumps <= maxJumps) {
+              // Random position across the screen
+              const x = Math.random() * -80 + 'vw'; // random left (0 to -80vw)
+              const y = Math.random() * -80 + 'vh'; // random up (0 to -80vh)
+              const rot = (Math.random() - 0.5) * 180 + 'deg';
+              catContainer.style.transform = `translate(${x}, ${y}) rotate(${rot})`;
             } else {
-              clearInterval(countdown);
-              catBubble.textContent = 'LIFTOFF!!! ☄️';
+              clearInterval(jumpInterval);
+              // Zip back to start
+              catContainer.style.transition = 'transform 0.5s ease-out';
+              catContainer.style.transform = 'translate(0, 0) rotate(0deg)';
+              catBubble.textContent = 'Whew... need a nap 💦';
               
-              // Shoot up off screen!
-              catContainer.style.transition = 'transform 1s cubic-bezier(0.1, 0.9, 0.2, 1)';
-              catContainer.style.transform = 'translateY(-150vh) rotate(720deg)'; // Spin twice!
-
               setTimeout(() => {
-                // Out of screen, hide bubble
                 catBubble.classList.remove('opacity-100', 'translate-y-0');
                 catBubble.classList.add('opacity-0', 'translate-y-2');
-                
-                // Wait 3s in the air
-                setTimeout(() => {
-                  catBubble.textContent = 'Incoming!! 🪂';
-                  catBubble.classList.remove('opacity-0', 'translate-y-2');
-                  catBubble.classList.add('opacity-100', 'translate-y-0');
-                  
-                  // Fall back down fast!
-                  catContainer.style.transition = 'transform 0.6s cubic-bezier(0.8, 0, 1, 1)';
-                  catContainer.style.transform = 'translateY(0) rotate(0deg)';
-                  
-                  // Crash land
-                  setTimeout(() => {
-                    catBubble.textContent = 'Nailed the landing! 😼';
-                    
-                    // Add a little squish effect on land
-                    catContainer.style.transition = 'transform 0.2s ease-out';
-                    catContainer.style.transform = 'scale(1.2, 0.8) translateY(20px)';
-                    
-                    setTimeout(() => {
-                      catContainer.style.transform = 'scale(1, 1) translateY(0)';
-                      
-                      // End interaction
-                      setTimeout(() => {
-                        catBubble.classList.remove('opacity-100', 'translate-y-0');
-                        catBubble.classList.add('opacity-0', 'translate-y-2');
-                        isJumping = false;
-                      }, 3000);
-                    }, 200); // Un-squish
-                  }, 600); // Time to fall
-                }, 3000); // Air time
-              }, 1000); // Ascent time
+                isJumping = false;
+              }, 2500);
             }
-          }, 800);
+          }, 250);
         });
       });
