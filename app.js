@@ -2245,19 +2245,19 @@
         style.textContent = `
           @keyframes cat-walk {
             0%, 100% { transform: translateY(0) rotate(0deg); }
-            25% { transform: translateY(-3px) rotate(3deg); }
+            25% { transform: translateY(-1px) rotate(1deg); }
             50% { transform: translateY(0) rotate(0deg); }
-            75% { transform: translateY(-3px) rotate(-3deg); }
+            75% { transform: translateY(-1px) rotate(-1deg); }
           }
-          .cat-walking { animation: cat-walk 0.6s infinite; }
-          .cat-running { animation: cat-walk 0.2s infinite; }
+          .cat-walking { animation: cat-walk 1.5s linear infinite; }
+          .cat-running { animation: cat-walk 0.3s linear infinite; }
         `;
         document.head.appendChild(style);
 
         let isFleeing = false;
         let xPos = 0; 
         let direction = -1; // -1: walking left (away from right edge), 1: walking right
-        let speed = 1; 
+        let speed = 0.5; // Walk very slowly and naturally
         let patrolRange = Math.min(window.innerWidth * 0.4, 400); // 40% of screen or 400px max
 
         catEmoji.classList.add('cat-walking');
@@ -2272,7 +2272,7 @@
           if (catFlip) catFlip.style.transform = `scaleX(${scale})`;
           catContainer.style.transform = `translateX(${xPos}px)`;
 
-          // Bounds check (right edge is x=0, left is negative)
+          // Bounds check
           if (xPos <= -patrolRange) direction = 1;
           if (xPos >= 0) direction = -1;
 
@@ -2286,52 +2286,60 @@
           if (isFleeing) return;
           isFleeing = true; // Pauses patrol loop
 
+          // Stop walking animation while talking
           catEmoji.classList.remove('cat-walking');
-          catEmoji.classList.add('cat-running');
+          catEmoji.style.transform = 'translateY(0) rotate(0deg)';
           
-          catBubble.textContent = '🙀 Ánh... chayyyyy!';
+          catBubble.textContent = 'Meow! Who dares disturb my slumber?!';
           catBubble.classList.remove('opacity-0', 'translate-y-2');
           catBubble.classList.add('opacity-100', 'translate-y-0');
 
-          // Run to the right quickly!
-          direction = 1;
-          if (catFlip) catFlip.style.transform = `scaleX(-1)`;
-          
-          // Use CSS transition to flee
-          catContainer.style.transition = 'transform 1.5s cubic-bezier(0.4, 0, 0.2, 1)';
-          catContainer.style.transform = 'translateX(100vw)'; 
-
+          // Wait 2.5 seconds before running away
           setTimeout(() => {
-            // Out of screen, reset
-            catContainer.style.transition = 'none';
-            catBubble.classList.remove('opacity-100', 'translate-y-0');
-            catBubble.classList.add('opacity-0', 'translate-y-2');
+            catEmoji.classList.add('cat-running');
+            catBubble.textContent = 'I am outta here...';
             
-            // Wait 15s to return
-            setTimeout(() => {
-              catEmoji.classList.remove('cat-running');
-              catEmoji.classList.add('cat-walking');
-              
-              // Spawn left edge
-              xPos = -window.innerWidth - 50;
-              catContainer.style.transform = `translateX(${xPos}px)`;
-              direction = 1; // Walk right
-              if (catFlip) catFlip.style.transform = `scaleX(-1)`;
+            // Run to the right quickly!
+            direction = 1;
+            if (catFlip) catFlip.style.transform = `scaleX(-1)`;
+            
+            // Use CSS transition to flee
+            catContainer.style.transition = 'transform 2s cubic-bezier(0.4, 0, 0.2, 1)';
+            catContainer.style.transform = 'translateX(100vw)'; 
 
-              requestAnimationFrame(() => {
-                isFleeing = false; // Resume patrol loop
-                speed = 2.5; // Walk back a bit faster
-                requestAnimationFrame(patrolLoop);
+            setTimeout(() => {
+              // Out of screen, reset
+              catContainer.style.transition = 'none';
+              catBubble.classList.remove('opacity-100', 'translate-y-0');
+              catBubble.classList.add('opacity-0', 'translate-y-2');
+              
+              // Wait 15s to return
+              setTimeout(() => {
+                catEmoji.classList.remove('cat-running');
+                catEmoji.classList.add('cat-walking');
+                catEmoji.style.transform = ''; // Clear inline styles
                 
-                // Reset speed when it reaches patrol zone
-                const checkSpeed = setInterval(() => {
-                  if (xPos >= -patrolRange) {
-                    speed = 1;
-                    clearInterval(checkSpeed);
-                  }
-                }, 500);
-              });
-            }, 15000);
-          }, 1500);
+                // Spawn left edge
+                xPos = -window.innerWidth - 100;
+                catContainer.style.transform = `translateX(${xPos}px)`;
+                direction = 1; // Walk right
+                if (catFlip) catFlip.style.transform = `scaleX(-1)`;
+
+                requestAnimationFrame(() => {
+                  isFleeing = false; // Resume patrol loop
+                  speed = 2.5; // Run back a bit faster
+                  requestAnimationFrame(patrolLoop);
+                  
+                  // Reset speed when it reaches patrol zone
+                  const checkSpeed = setInterval(() => {
+                    if (xPos >= -patrolRange) {
+                      speed = 0.5; // Resume slow natural walk
+                      clearInterval(checkSpeed);
+                    }
+                  }, 500);
+                });
+              }, 15000);
+            }, 2000); // Flee transition time
+          }, 2500); // Delay before running
         });
       });
