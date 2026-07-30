@@ -646,12 +646,14 @@
     </div>
 
     <!-- ═══════════════  LOFI CAT ANIMATION  ═══════════════ -->
-    <div id="lofi-cat-container" class="fixed bottom-6 right-6 z-40 flex flex-col items-end cursor-pointer select-none">
+    <div id="lofi-cat-container" class="fixed bottom-6 right-6 z-40 flex flex-col items-center cursor-pointer select-none" style="will-change: transform;">
       <div id="cat-speech-bubble" class="bg-white/90 backdrop-blur-sm border border-slate-200 text-slate-700 text-xs font-bold px-3 py-2 rounded-2xl rounded-br-none shadow-lg mb-2 opacity-0 transition-all duration-300 transform translate-y-2 pointer-events-none whitespace-nowrap">
         Zzz...
       </div>
-      <div id="cat-emoji" class="text-4xl filter drop-shadow-lg transition-transform duration-300 hover:scale-110 origin-bottom" style="font-family: 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif;">
-        🐈
+      <div id="cat-flip-wrapper" class="origin-center" style="transition: transform 0.2s;">
+        <div id="cat-emoji" class="text-4xl filter drop-shadow-lg origin-bottom" style="font-family: 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif;">
+          🐈
+        </div>
       </div>
     </div>
 

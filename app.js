@@ -2234,39 +2234,104 @@
       // ═══════════════ LOFI CAT ANIMATION ═══════════════
       document.addEventListener('DOMContentLoaded', () => {
         const catContainer = document.getElementById('lofi-cat-container');
+        const catFlip = document.getElementById('cat-flip-wrapper');
         const catEmoji = document.getElementById('cat-emoji');
         const catBubble = document.getElementById('cat-speech-bubble');
         
-        if (!catContainer) return;
+        if (!catContainer || !catEmoji) return;
 
-        let isRunning = false;
+        // Inject animation CSS
+        const style = document.createElement('style');
+        style.textContent = `
+          @keyframes cat-walk {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-3px) rotate(3deg); }
+            50% { transform: translateY(0) rotate(0deg); }
+            75% { transform: translateY(-3px) rotate(-3deg); }
+          }
+          .cat-walking { animation: cat-walk 0.6s infinite; }
+          .cat-running { animation: cat-walk 0.2s infinite; }
+        `;
+        document.head.appendChild(style);
+
+        let isFleeing = false;
+        let xPos = 0; 
+        let direction = -1; // -1: walking left (away from right edge), 1: walking right
+        let speed = 1; 
+        let patrolRange = Math.min(window.innerWidth * 0.4, 400); // 40% of screen or 400px max
+
+        catEmoji.classList.add('cat-walking');
+
+        function patrolLoop() {
+          if (isFleeing) return;
+          
+          xPos += direction * speed;
+          
+          // Apply flip. 🐈 defaults to facing left, so direction -1 = scaleX(1). direction 1 = scaleX(-1)
+          const scale = direction === -1 ? 1 : -1;
+          if (catFlip) catFlip.style.transform = `scaleX(${scale})`;
+          catContainer.style.transform = `translateX(${xPos}px)`;
+
+          // Bounds check (right edge is x=0, left is negative)
+          if (xPos <= -patrolRange) direction = 1;
+          if (xPos >= 0) direction = -1;
+
+          requestAnimationFrame(patrolLoop);
+        }
+
+        // Start patrol
+        requestAnimationFrame(patrolLoop);
 
         catContainer.addEventListener('click', () => {
-          if (isRunning) return;
-          isRunning = true;
+          if (isFleeing) return;
+          isFleeing = true; // Pauses patrol loop
 
-          // Wake up annoyed with a little pop
-          catEmoji.textContent = '😾';
-          catEmoji.style.transform = 'scale(1.2) translateY(-10px)';
-          catBubble.textContent = 'Meow... lười quá, từ từ hẵng đòi...';
+          catEmoji.classList.remove('cat-walking');
+          catEmoji.classList.add('cat-running');
+          
+          catBubble.textContent = '🙀 Ánh... chayyyyy!';
           catBubble.classList.remove('opacity-0', 'translate-y-2');
           catBubble.classList.add('opacity-100', 'translate-y-0');
 
-          // Settle down after 0.3s
-          setTimeout(() => {
-            catEmoji.style.transform = 'scale(1) translateY(0)';
-          }, 300);
+          // Run to the right quickly!
+          direction = 1;
+          if (catFlip) catFlip.style.transform = `scaleX(-1)`;
+          
+          // Use CSS transition to flee
+          catContainer.style.transition = 'transform 1.5s cubic-bezier(0.4, 0, 0.2, 1)';
+          catContainer.style.transform = 'translateX(100vw)'; 
 
-          // Go back to sleep after 4s
           setTimeout(() => {
-            catEmoji.textContent = '🐈';
+            // Out of screen, reset
+            catContainer.style.transition = 'none';
             catBubble.classList.remove('opacity-100', 'translate-y-0');
             catBubble.classList.add('opacity-0', 'translate-y-2');
             
-            // Allow clicking again
+            // Wait 15s to return
             setTimeout(() => {
-              isRunning = false;
-            }, 500);
-          }, 4000);
+              catEmoji.classList.remove('cat-running');
+              catEmoji.classList.add('cat-walking');
+              
+              // Spawn left edge
+              xPos = -window.innerWidth - 50;
+              catContainer.style.transform = `translateX(${xPos}px)`;
+              direction = 1; // Walk right
+              if (catFlip) catFlip.style.transform = `scaleX(-1)`;
+
+              requestAnimationFrame(() => {
+                isFleeing = false; // Resume patrol loop
+                speed = 2.5; // Walk back a bit faster
+                requestAnimationFrame(patrolLoop);
+                
+                // Reset speed when it reaches patrol zone
+                const checkSpeed = setInterval(() => {
+                  if (xPos >= -patrolRange) {
+                    speed = 1;
+                    clearInterval(checkSpeed);
+                  }
+                }, 500);
+              });
+            }, 15000);
+          }, 1500);
         });
       });
