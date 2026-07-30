@@ -2245,21 +2245,22 @@
           if (isRunning) return;
           isRunning = true;
 
-          // Wake up
-          catEmoji.textContent = '🙀';
-          catBubble.textContent = 'Meow! Time to collect debts!';
+          // Wake up annoyed
+          catEmoji.textContent = '😾';
+          catBubble.textContent = 'Meow... lười quá, từ từ hẵng đòi...';
           catBubble.classList.remove('opacity-0', 'translate-y-2');
           catBubble.classList.add('opacity-100', 'translate-y-0');
 
-          // Run away after 1.5s
+          // Walk away VERY slowly after 2s
           setTimeout(() => {
             catEmoji.textContent = '🐈';
-            catContainer.style.transform = 'translateX(200vw)';
+            catContainer.style.transition = 'transform 8s ease-in-out';
+            catContainer.style.transform = 'translateX(150vw)';
             catBubble.classList.remove('opacity-100', 'translate-y-0');
             catBubble.classList.add('opacity-0', 'translate-y-2');
-          }, 1500);
+          }, 2000);
 
-          // Return after 15 seconds
+          // Return slowly after 15 seconds
           setTimeout(() => {
             // Instantly move to left off-screen
             catContainer.style.transition = 'none';
@@ -2268,11 +2269,15 @@
             // Allow browser to apply the transform before reenabling transition
             requestAnimationFrame(() => {
               requestAnimationFrame(() => {
-                catContainer.style.transition = 'transform 3s ease-in-out';
+                catContainer.style.transition = 'transform 8s ease-out'; // stroll back in slowly
                 catContainer.style.transform = 'translateX(0)';
                 catEmoji.textContent = '🐈';
                 catBubble.textContent = 'Zzz...';
-                isRunning = false;
+                
+                // Allow clicking again only after it has fully returned
+                setTimeout(() => {
+                  isRunning = false;
+                }, 8000);
               });
             });
           }, 15000);
