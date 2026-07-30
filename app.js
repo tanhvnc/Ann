@@ -1081,11 +1081,44 @@
       function openDetailModal() {
         document.getElementById('modal-item-header-title').textContent = 'Add Detail';
         document.getElementById('modal-item-header-desc').textContent = 'Attach a detail item to an existing event.';
-        populateDetailEvents();
         document.getElementById('detail-form').reset();
         clearFieldErrors('detail-form');
         document.getElementById('modal-item-id').value = '';
+        
+        populateYearFilter();
+        populateDetailEvents();
+        
         openModal('detailModal');
+      }
+
+      function populateYearFilter() {
+        const select = document.getElementById('modal-detail-year-filter');
+        if (!select) return;
+        
+        const years = new Set();
+        globalEvents.forEach(event => {
+            if (event.event_date) {
+                const year = event.event_date.split('-')[0];
+                if (year) years.add(year);
+            }
+        });
+        
+        const sortedYears = Array.from(years).sort((a, b) => b - a);
+        
+        select.innerHTML = '<option value="all">All Years</option>';
+        sortedYears.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            select.appendChild(option);
+        });
+
+        const currentYear = new Date().getFullYear().toString();
+        if (sortedYears.includes(currentYear)) {
+            select.value = currentYear;
+        } else {
+            select.value = 'all';
+        }
       }
 
       /* ═══════════════════════════
@@ -1320,13 +1353,26 @@
          ═══════════════════════════ */
       function populateDetailEvents() {
         const select = document.getElementById('modal-detail-event-id');
+        const yearFilter = document.getElementById('modal-detail-year-filter');
         if (!select) return;
+        
         select.innerHTML = '<option value="">Select an event</option>';
+        
+        const selectedYear = yearFilter ? yearFilter.value : 'all';
+
         globalEvents.forEach(event => {
-          const option = document.createElement('option');
-          option.value = event.id;
-          option.textContent = event.title;
-          select.appendChild(option);
+          let eventYear = null;
+          if (event.event_date) {
+             eventYear = event.event_date.split('-')[0];
+          }
+
+          if (selectedYear === 'all' || eventYear === selectedYear) {
+             const option = document.createElement('option');
+             option.value = event.id;
+             const dateStr = event.event_date ? ` (${event.event_date})` : '';
+             option.textContent = event.title + dateStr;
+             select.appendChild(option);
+          }
         });
       }
 
