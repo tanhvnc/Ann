@@ -2230,3 +2230,51 @@
           });
         });
       }
+
+      // ═══════════════ LOFI CAT ANIMATION ═══════════════
+      document.addEventListener('DOMContentLoaded', () => {
+        const catContainer = document.getElementById('lofi-cat-container');
+        const catEmoji = document.getElementById('cat-emoji');
+        const catBubble = document.getElementById('cat-speech-bubble');
+        
+        if (!catContainer) return;
+
+        let isRunning = false;
+
+        catContainer.addEventListener('click', () => {
+          if (isRunning) return;
+          isRunning = true;
+
+          // Wake up
+          catEmoji.textContent = '🙀';
+          catBubble.textContent = 'Meow! Time to collect debts!';
+          catBubble.classList.remove('opacity-0', 'translate-y-2');
+          catBubble.classList.add('opacity-100', 'translate-y-0');
+
+          // Run away after 1.5s
+          setTimeout(() => {
+            catEmoji.textContent = '🐈';
+            catContainer.style.transform = 'translateX(200vw)';
+            catBubble.classList.remove('opacity-100', 'translate-y-0');
+            catBubble.classList.add('opacity-0', 'translate-y-2');
+          }, 1500);
+
+          // Return after 15 seconds
+          setTimeout(() => {
+            // Instantly move to left off-screen
+            catContainer.style.transition = 'none';
+            catContainer.style.transform = 'translateX(-100vw)';
+            
+            // Allow browser to apply the transform before reenabling transition
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                catContainer.style.transition = 'transform 3s ease-in-out';
+                catContainer.style.transform = 'translateX(0)';
+                catEmoji.textContent = '🐈';
+                catBubble.textContent = 'Zzz...';
+                isRunning = false;
+              });
+            });
+          }, 15000);
+        });
+      });
