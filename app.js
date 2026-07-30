@@ -241,6 +241,7 @@
               coverImageDiv.style.backgroundImage = `url('${coverUrl}')`;
           }
           showToast('Cập nhật ảnh bìa thành công!', 'success');
+          closeModal('coverModal');
         } catch (error) {
           console.error('Lỗi upload cover:', error);
           showToast('Không thể tải ảnh lên: ' + error.message, 'error');
@@ -279,6 +280,55 @@
         } catch (error) {
             console.error('Lỗi lấy ảnh bìa:', error);
             coverImageDiv.style.backgroundImage = `url('${DEFAULT_COVER_URL}')`;
+        }
+      }
+
+      const GALLERY_COVERS = [
+        "/libs/covers/lofi_plants_1785415358403.png",
+        "/libs/covers/lofi_desk_1785415367955.png",
+        "/libs/covers/lofi_city_1785415378301.png",
+        "/libs/covers/lofi_nature_1785415387396.png"
+      ];
+
+      function renderCoverGallery() {
+        const grid = document.getElementById('gallery-grid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        GALLERY_COVERS.forEach(url => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'w-full h-24 rounded-xl overflow-hidden border-2 border-transparent hover:border-indigo-500 focus:outline-none focus:border-indigo-500 transition shadow-sm group relative';
+            btn.innerHTML = `<img src="${url}" class="w-full h-full object-cover group-hover:scale-110 transition duration-300" />
+                             <div class="absolute inset-0 bg-indigo-500/0 group-hover:bg-indigo-500/20 transition duration-300"></div>`;
+            btn.onclick = () => selectGalleryCover(url);
+            grid.appendChild(btn);
+        });
+      }
+
+      async function selectGalleryCover(url) {
+        const user = currentUserSession?.user;
+        if (!user || !state.currentPerson || state.currentPerson === 'All') return;
+
+        try {
+            const { error: dbError } = await supabaseClient
+            .from('person_profiles')
+            .upsert({
+                user_id: user.id,
+                person_name: state.currentPerson,
+                cover_photo_url: url
+            }, { onConflict: 'user_id, person_name' });
+
+            if (dbError) throw dbError;
+
+            const coverImageDiv = document.getElementById('cover-image');
+            if (coverImageDiv) {
+                coverImageDiv.style.backgroundImage = `url('${url}')`;
+            }
+            showToast('Đã chọn ảnh bìa thành công!', 'success');
+            closeModal('coverModal');
+        } catch (error) {
+            console.error('Lỗi chọn ảnh bìa:', error);
+            showToast('Không thể cập nhật ảnh bìa: ' + error.message, 'error');
         }
       }
 
@@ -1786,6 +1836,7 @@
       document.addEventListener('DOMContentLoaded', async () => {
         const savedTheme = localStorage.getItem('debt-tracker-theme') || 'light';
         applyTheme(savedTheme);
+        renderCoverGallery();
 
         // Initialize FullCalendar ONCE
         const calendarEl = document.getElementById('calendar-container');
