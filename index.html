@@ -73,21 +73,26 @@
       </aside>
 
       <!-- ─── Main ─── -->
-      <main class="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
+      <main class="flex-1 overflow-auto bg-slate-50 relative flex flex-col">
+        
+        <!-- Cover Image -->
+        <div class="w-full h-48 sm:h-64 shrink-0 bg-cover bg-center border-b border-slate-200 shadow-sm" style="background-image: url('https://images.unsplash.com/photo-1707343843437-caacff5cfa74?auto=format&fit=crop&w=2000&q=80');">
+        </div>
 
-        <!-- Header -->
-        <header class="mb-5">
-          <div class="flex flex-col gap-3 sm:gap-4">
-            <div class="flex items-center justify-between w-full">
-              <div class="flex items-center gap-3">
-                <img src="/logo1.png" alt="Debt Tracker Logo" class="w-11 h-11 rounded-2xl shadow-md border border-slate-200/60 object-cover p-0.5 bg-white" />
-                <div>
-                  <h1 id="page-title" class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 leading-tight">Debt Tracker</h1>
-                  <p id="header-subtitle" class="mt-0.5 text-sm text-slate-500">A modern finance workspace for tracking personal debts and payments.</p>
+        <div class="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative flex-1 flex flex-col">
+          <!-- Header -->
+          <header class="mb-5 relative z-10 -mt-10 sm:-mt-12">
+            <div class="flex flex-col gap-3 sm:gap-4">
+              <div class="flex items-end justify-between w-full">
+                <div class="flex items-end gap-3 sm:gap-4">
+                  <img src="/logo1.png" alt="Debt Tracker Logo" class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl shadow-md border-4 border-slate-50 object-cover bg-white" />
+                  <div class="mb-1 sm:mb-2">
+                    <h1 id="page-title" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 leading-tight">Debt Tracker</h1>
+                    <p id="header-subtitle" class="mt-0.5 text-sm text-slate-600 font-medium">A modern finance workspace for tracking personal debts and payments.</p>
+                  </div>
                 </div>
-              </div>
               
-              <div id="user-profile-badge" class="hidden group flex items-center gap-3 rounded-full bg-white border border-slate-200/80 pl-1.5 pr-4 py-1.5 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-indigo-200 hover:-translate-y-0.5 cursor-pointer" onclick="document.getElementById('avatar-upload').click()" title="Đổi ảnh đại diện">
+              <div id="user-profile-badge" class="hidden group flex items-center gap-3 rounded-full bg-white border border-slate-200/80 pl-1.5 pr-4 py-1.5 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-indigo-200 hover:-translate-y-0.5 cursor-pointer mb-2" onclick="document.getElementById('avatar-upload').click()" title="Đổi ảnh đại diện">
                 <!-- Avatar with animated gradient ring -->
                 <div class="relative flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-[2px]">
                   <div class="flex h-full w-full items-center justify-center rounded-full bg-white overflow-hidden">
@@ -294,6 +299,7 @@
           <div id="calendar-container" class="flex-1 min-h-0 bg-white p-4 rounded-2xl shadow-sm border border-slate-100 overflow-auto"></div>
         </div>
 
+        </div> <!-- End of inner max-w-5xl container -->
       </main>
     </div>
 
