@@ -138,25 +138,34 @@
         <!-- ═══════════════  VIEW: HOME  ═══════════════ -->
         <div id="view-home">
 
-          <!-- Top Actions (Persistent) -->
-          <div class="flex flex-wrap justify-end gap-2 mb-5 w-full">
-            <button type="button" onclick="openEventModal()" class="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 shadow-sm">
-              <span>+ Add Event</span>
-            </button>
-            <button type="button" onclick="openDetailModal()" class="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 shadow-sm">
-              <span>+ Add Detail</span>
-            </button>
-            <button type="button" onclick="openPrintModal()" class="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 shadow-sm" title="Print debt ledger">
-              <span>🖨️ Print</span>
+          <!-- ═══ YEAR GALLERY ═══ -->
+          <div id="home-year-gallery" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+          
+          <!-- Empty State -->
+          <div id="home-year-empty" class="hidden text-center py-16">
+            <div class="w-16 h-16 mx-auto mb-4 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center text-2xl">📋</div>
+            <h3 class="text-base font-bold text-slate-800 mb-1">No events yet</h3>
+            <p class="text-sm text-slate-500 mb-5">Start tracking by adding your first event.</p>
+            <button type="button" onclick="openEventModal()" class="rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 shadow-sm">
+              + Add Event
             </button>
           </div>
 
-          <!-- ═══ YEAR GALLERY ═══ -->
-          <div id="home-year-gallery" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-          <div id="home-year-empty" class="hidden text-center text-sm text-slate-400 py-10">No events found.</div>
-
           <!-- ═══ YEAR DETAIL (Table) ═══ -->
           <div id="home-year-detail" class="hidden">
+            <!-- Top Actions -->
+            <div class="flex flex-wrap justify-end gap-2 mb-5 w-full">
+              <button type="button" onclick="openEventModal()" class="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 shadow-sm">
+                <span>+ Add Event</span>
+              </button>
+              <button type="button" onclick="openDetailModal()" class="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 shadow-sm">
+                <span>+ Add Detail</span>
+              </button>
+              <button type="button" onclick="openPrintModal()" class="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 shadow-sm" title="Print debt ledger">
+                <span>🖨️ Print</span>
+              </button>
+            </div>
+
             <!-- Toolbar -->
             <section class="toolbar mb-5 flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
@@ -399,7 +408,7 @@
           <hr class="border-slate-100 dark:border-slate-800 my-2" />
           <label class="flex items-center gap-3 cursor-pointer p-2">
             <input type="checkbox" id="print-cover-opt" checked class="accent-indigo-500 w-4 h-4 rounded border-slate-300" />
-            <div class="font-semibold text-sm text-slate-700 dark:text-slate-300">Bao gồm ảnh bìa (Include Cover Image)</div>
+            <div class="font-semibold text-sm text-slate-700 dark:text-slate-300">Include Cover Image</div>
           </label>
 <div class="flex justify-end gap-2 pt-2">
             <button type="button" onclick="closeModal('printModal')" class="rounded-2xl border border-slate-200 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">Cancel</button>
