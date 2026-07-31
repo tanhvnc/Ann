@@ -34,37 +34,51 @@
   --font-base: 'Press Start 2P', monospace;
 }
 
+[data-theme="hacker"] {
+  color-scheme: dark;
+  --bg-main: #000000;
+  --bg-surface: #0a0a0a;
+  --text-main: #00ff00;
+  --text-muted: #009900;
+  --primary: #00ff00;
+  --primary-hover: #00cc00;
+  --border-color: #005500;
+  --font-base: 'Courier New', Courier, monospace;
+}
+
 /* ─── Base ─── */
 * { box-sizing: border-box; }
 body { font-family: var(--font-base); background: var(--bg-main); color: var(--text-main); margin: 0; transition: background-color 0.2s ease, color 0.2s ease; }
 @media screen {
   /* Hỗ trợ backwards-compatibility cho dark mode hiện tại */
-  html.dark body, [data-theme="dark"] body, [data-theme="pixel"] body { background: var(--bg-main); color: var(--text-main); }
-  html.dark .sidebar, [data-theme="dark"] .sidebar, [data-theme="pixel"] .sidebar { background: linear-gradient(180deg, var(--bg-main) 0%, var(--bg-surface) 100%); border-color: var(--border-color); }
-  html.dark .toolbar, [data-theme="dark"] .toolbar, [data-theme="pixel"] .toolbar,
-  html.dark .table-shell, [data-theme="dark"] .table-shell, [data-theme="pixel"] .table-shell,
-  html.dark .stat-card, [data-theme="dark"] .stat-card, [data-theme="pixel"] .stat-card,
-  html.dark .chart-card, [data-theme="dark"] .chart-card, [data-theme="pixel"] .chart-card,
-  html.dark .bg-white, [data-theme="dark"] .bg-white, [data-theme="pixel"] .bg-white { background-color: var(--bg-surface) !important; }
+  html.dark body, [data-theme="dark"] body, [data-theme="pixel"] body, [data-theme="hacker"] body { background: var(--bg-main); color: var(--text-main); }
+  html.dark .sidebar, [data-theme="dark"] .sidebar, [data-theme="pixel"] .sidebar, [data-theme="hacker"] .sidebar { background: linear-gradient(180deg, var(--bg-main) 0%, var(--bg-surface) 100%); border-color: var(--border-color); }
+  html.dark .toolbar, [data-theme="dark"] .toolbar, [data-theme="pixel"] .toolbar, [data-theme="hacker"] .toolbar,
+  html.dark .table-shell, [data-theme="dark"] .table-shell, [data-theme="pixel"] .table-shell, [data-theme="hacker"] .table-shell,
+  html.dark .stat-card, [data-theme="dark"] .stat-card, [data-theme="pixel"] .stat-card, [data-theme="hacker"] .stat-card,
+  html.dark .chart-card, [data-theme="dark"] .chart-card, [data-theme="pixel"] .chart-card, [data-theme="hacker"] .chart-card,
+  html.dark .bg-white, [data-theme="dark"] .bg-white, [data-theme="pixel"] .bg-white, [data-theme="hacker"] .bg-white { background-color: var(--bg-surface) !important; }
 
-  html.dark .bg-slate-50, [data-theme="dark"] .bg-slate-50, [data-theme="pixel"] .bg-slate-50 { background-color: var(--bg-main) !important; }
+  html.dark .bg-slate-50, [data-theme="dark"] .bg-slate-50, [data-theme="pixel"] .bg-slate-50, [data-theme="hacker"] .bg-slate-50 { background-color: var(--bg-main) !important; }
   html.dark .text-slate-700, html.dark .text-slate-600, html.dark .text-slate-500, html.dark .text-slate-400,
   [data-theme="dark"] .text-slate-700, [data-theme="dark"] .text-slate-600, [data-theme="dark"] .text-slate-500, [data-theme="dark"] .text-slate-400,
-  [data-theme="pixel"] .text-slate-700, [data-theme="pixel"] .text-slate-600, [data-theme="pixel"] .text-slate-500, [data-theme="pixel"] .text-slate-400 { color: var(--text-muted) !important; }
+  [data-theme="pixel"] .text-slate-700, [data-theme="pixel"] .text-slate-600, [data-theme="pixel"] .text-slate-500, [data-theme="pixel"] .text-slate-400,
+  [data-theme="hacker"] .text-slate-700, [data-theme="hacker"] .text-slate-600, [data-theme="hacker"] .text-slate-500, [data-theme="hacker"] .text-slate-400 { color: var(--text-muted) !important; }
   
-  html.dark .text-slate-900, [data-theme="dark"] .text-slate-900, [data-theme="pixel"] .text-slate-900 { color: var(--text-main) !important; }
+  html.dark .text-slate-900, [data-theme="dark"] .text-slate-900, [data-theme="pixel"] .text-slate-900, [data-theme="hacker"] .text-slate-900 { color: var(--text-main) !important; }
   html.dark .border-slate-200, html.dark .border-slate-300,
   [data-theme="dark"] .border-slate-200, [data-theme="dark"] .border-slate-300,
-  [data-theme="pixel"] .border-slate-200, [data-theme="pixel"] .border-slate-300 { border-color: var(--border-color) !important; }
+  [data-theme="pixel"] .border-slate-200, [data-theme="pixel"] .border-slate-300,
+  [data-theme="hacker"] .border-slate-200, [data-theme="hacker"] .border-slate-300 { border-color: var(--border-color) !important; }
   
-  html.dark .form-input, [data-theme="dark"] .form-input, [data-theme="pixel"] .form-input { background-color: var(--bg-main); color: var(--text-main); border-color: var(--border-color); }
-  html.dark .form-input::placeholder, [data-theme="dark"] .form-input::placeholder, [data-theme="pixel"] .form-input::placeholder { color: var(--text-muted); }
-  html.dark .table-header, [data-theme="dark"] .table-header, [data-theme="pixel"] .table-header { background: var(--bg-main); color: var(--text-muted); }
-  html.dark .summary-row, [data-theme="dark"] .summary-row, [data-theme="pixel"] .summary-row { background: linear-gradient(135deg, var(--bg-main), var(--bg-surface)) !important; border-color: var(--border-color); }
-  html.dark .person-tab, [data-theme="dark"] .person-tab, [data-theme="pixel"] .person-tab { background: var(--bg-main); border-color: var(--border-color); }
-  html.dark .person-tab.active, [data-theme="dark"] .person-tab.active, [data-theme="pixel"] .person-tab.active { background: var(--primary-hover); border-color: var(--primary-hover); }
-  html.dark .nav-btn:hover, [data-theme="dark"] .nav-btn:hover, [data-theme="pixel"] .nav-btn:hover { background: rgba(129, 140, 248, 0.16); color: var(--primary); }
-  html.dark .nav-btn.active, [data-theme="dark"] .nav-btn.active, [data-theme="pixel"] .nav-btn.active { background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(79,70,229,0.2)); color: var(--primary); }
+  html.dark .form-input, [data-theme="dark"] .form-input, [data-theme="pixel"] .form-input, [data-theme="hacker"] .form-input { background-color: var(--bg-main); color: var(--text-main); border-color: var(--border-color); }
+  html.dark .form-input::placeholder, [data-theme="dark"] .form-input::placeholder, [data-theme="pixel"] .form-input::placeholder, [data-theme="hacker"] .form-input::placeholder { color: var(--text-muted); }
+  html.dark .table-header, [data-theme="dark"] .table-header, [data-theme="pixel"] .table-header, [data-theme="hacker"] .table-header { background: var(--bg-main); color: var(--text-muted); }
+  html.dark .summary-row, [data-theme="dark"] .summary-row, [data-theme="pixel"] .summary-row, [data-theme="hacker"] .summary-row { background: linear-gradient(135deg, var(--bg-main), var(--bg-surface)) !important; border-color: var(--border-color); }
+  html.dark .person-tab, [data-theme="dark"] .person-tab, [data-theme="pixel"] .person-tab, [data-theme="hacker"] .person-tab { background: var(--bg-main); border-color: var(--border-color); }
+  html.dark .person-tab.active, [data-theme="dark"] .person-tab.active, [data-theme="pixel"] .person-tab.active, [data-theme="hacker"] .person-tab.active { background: var(--primary-hover); border-color: var(--primary-hover); }
+  html.dark .nav-btn:hover, [data-theme="dark"] .nav-btn:hover, [data-theme="pixel"] .nav-btn:hover, [data-theme="hacker"] .nav-btn:hover { background: rgba(0, 255, 0, 0.16); color: var(--primary); }
+  html.dark .nav-btn.active, [data-theme="dark"] .nav-btn.active, [data-theme="pixel"] .nav-btn.active, [data-theme="hacker"] .nav-btn.active { background: rgba(0, 255, 0, 0.2); color: var(--primary); }
 }
 
 /* ─── Sidebar ─── */
@@ -791,4 +805,48 @@ input, select, button { font: inherit; }
 
 [data-theme="pixel"] .fc-toolbar-title {
   font-size: 0.8rem !important;
+}
+
+/* ═══════════════════════════════════════════════
+   HACKER THEME OVERRIDES
+   ═══════════════════════════════════════════════ */
+[data-theme="hacker"] {
+  text-shadow: 0 0 2px var(--primary);
+}
+
+[data-theme="hacker"] .stat-card,
+[data-theme="hacker"] .chart-card,
+[data-theme="hacker"] .table-shell,
+[data-theme="hacker"] .modal-box,
+[data-theme="hacker"] #calendar-container,
+[data-theme="hacker"] .toolbar {
+  border: 1px solid var(--border-color) !important;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.15), inset 0 0 10px rgba(0, 255, 0, 0.05) !important;
+}
+
+[data-theme="hacker"] button,
+[data-theme="hacker"] .nav-btn,
+[data-theme="hacker"] .person-tab {
+  border: 1px solid var(--border-color) !important;
+  box-shadow: 0 0 5px rgba(0, 255, 0, 0.2) !important;
+  transition: all 0.2s !important;
+}
+[data-theme="hacker"] button:hover,
+[data-theme="hacker"] .nav-btn:hover,
+[data-theme="hacker"] .person-tab:hover {
+  box-shadow: 0 0 15px rgba(0, 255, 0, 0.4) !important;
+  background-color: rgba(0, 255, 0, 0.1) !important;
+}
+
+[data-theme="hacker"] .form-input {
+  border: 1px solid var(--border-color) !important;
+  box-shadow: inset 0 0 5px rgba(0, 255, 0, 0.1) !important;
+}
+
+[data-theme="hacker"] td, [data-theme="hacker"] th {
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+[data-theme="hacker"] .summary-row {
+  border-top: 2px solid var(--border-color) !important;
 }

@@ -451,7 +451,7 @@
 
       function applyTheme(theme) {
         // Hỗ trợ backwards-compatibility cho các class của tailwind đang phụ thuộc vào class="dark"
-        const isDark = (theme === 'dark' || theme === 'pixel');
+        const isDark = (theme === 'dark' || theme === 'pixel' || theme === 'hacker');
         document.documentElement.classList.toggle('dark', isDark);
         document.body.classList.toggle('dark', isDark);
         
@@ -465,6 +465,8 @@
             icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/>';
           } else if (theme === 'pixel') {
             icon.innerHTML = '<rect x="2" y="6" width="20" height="12" rx="2" ry="2"></rect><path d="M6 12h4m-2-2v4m4-4h.01M16 12h.01M16 10h.01"></path>';
+          } else if (theme === 'hacker') {
+            icon.innerHTML = '<path d="M4 17L10 11L4 5M12 19H20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
           } else {
             icon.innerHTML = '<path d="M12 3v2"/><path d="M12 19v2"/><path d="M4.22 4.22l1.42 1.42"/><path d="M18.36 18.36l1.42 1.42"/><path d="M3 12h2"/><path d="M19 12h2"/><path d="M4.22 19.78l1.42-1.42"/><path d="M18.36 5.64l1.42-1.42"/><circle cx="12" cy="12" r="3.5"/>';
           }
@@ -565,6 +567,10 @@
       }
 
       function applySearch(value) {
+        if (value.toLowerCase() === 'hacker') {
+          applyTheme('hacker');
+          showToast('Welcome to the Matrix.', 'success');
+        }
         state.search = value;
         renderTable();
       }
