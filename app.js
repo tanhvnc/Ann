@@ -830,6 +830,9 @@
             draggable: 'tbody.event-group',
             filter: '.no-drag',
             preventOnFilter: false,
+            delay: 200,
+            delayOnTouchOnly: true,
+            touchStartThreshold: 5,
             onEnd: function () {
               const newOrder = [];
               table.querySelectorAll('tbody.event-group').forEach(tb => {
@@ -1776,6 +1779,9 @@
           Sortable.create(container, {
             animation: 150,
             ghostClass: 'opacity-50',
+            delay: 200,
+            delayOnTouchOnly: true,
+            touchStartThreshold: 5,
             onEnd: function (evt) {
               // Save new order
               const newOrder = [];
