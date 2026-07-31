@@ -11,7 +11,22 @@
     <!-- Tailwind CSS -->
     <script>
       window.tailwind = window.tailwind || {};
-      window.tailwind.config = { darkMode: 'class' };
+      window.tailwind.config = { 
+        darkMode: ['class', '[data-theme="dark"]'],
+        theme: {
+          extend: {
+            colors: {
+              background: 'var(--bg-main)',
+              surface: 'var(--bg-surface)',
+              textMain: 'var(--text-main)',
+              primary: 'var(--primary)',
+            },
+            fontFamily: {
+              sans: ['var(--font-base)', 'sans-serif'],
+            }
+          }
+        }
+      };
     </script>
     <script src="/libs/tailwind.js"></script>
     <!-- Chart.js -->
@@ -26,6 +41,14 @@
     <meta name="theme-color" content="#4f46e5" />
     <link rel="stylesheet" href="/style.css" />
     <script src="/libs/sortable.js"></script>
+    <script>
+      (function() {
+        var theme = localStorage.getItem('debt-tracker-theme') || 'light';
+        var isDark = (theme === 'dark' || theme === 'pixel');
+        if (isDark) { document.documentElement.classList.add('dark'); }
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
   </head>
 
   <body>

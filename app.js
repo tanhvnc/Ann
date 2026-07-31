@@ -450,22 +450,38 @@
       }
 
       function applyTheme(theme) {
-        const isDark = theme === 'dark';
+        // Hỗ trợ backwards-compatibility cho các class của tailwind đang phụ thuộc vào class="dark"
+        const isDark = (theme === 'dark' || theme === 'pixel');
         document.documentElement.classList.toggle('dark', isDark);
         document.body.classList.toggle('dark', isDark);
+        
+        // Cập nhật data-theme cho hệ thống multi-theme mới
+        document.documentElement.setAttribute('data-theme', theme);
+        document.body.setAttribute('data-theme', theme);
+
         const icon = document.getElementById('theme-toggle-icon');
         if (icon) {
-          icon.innerHTML = isDark
-            ? '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/>'
-            : '<path d="M12 3v2"/><path d="M12 19v2"/><path d="M4.22 4.22l1.42 1.42"/><path d="M18.36 18.36l1.42 1.42"/><path d="M3 12h2"/><path d="M19 12h2"/><path d="M4.22 19.78l1.42-1.42"/><path d="M18.36 5.64l1.42-1.42"/><circle cx="12" cy="12" r="3.5"/>';
+          if (theme === 'dark') {
+            icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/>';
+          } else if (theme === 'pixel') {
+            icon.innerHTML = '<rect x="2" y="6" width="20" height="12" rx="2" ry="2"></rect><path d="M6 12h4m-2-2v4m4-4h.01M16 12h.01M16 10h.01"></path>';
+          } else {
+            icon.innerHTML = '<path d="M12 3v2"/><path d="M12 19v2"/><path d="M4.22 4.22l1.42 1.42"/><path d="M18.36 18.36l1.42 1.42"/><path d="M3 12h2"/><path d="M19 12h2"/><path d="M4.22 19.78l1.42-1.42"/><path d="M18.36 5.64l1.42-1.42"/><circle cx="12" cy="12" r="3.5"/>';
+          }
         }
         localStorage.setItem('debt-tracker-theme', theme);
       }
 
       function toggleTheme() {
-        const nextTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+        const currentTheme = document.documentElement.getAttribute('data-theme') || (document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        let nextTheme = 'light';
+        
+        if (currentTheme === 'light') nextTheme = 'dark';
+        else if (currentTheme === 'dark') nextTheme = 'pixel';
+        else nextTheme = 'light';
+
         applyTheme(nextTheme);
-        showToast(nextTheme === 'dark' ? 'Dark mode enabled.' : 'Light mode enabled.', 'success');
+        showToast(`Theme changed to ${nextTheme.charAt(0).toUpperCase() + nextTheme.slice(1)}`, 'success');
       }
 
       /* ═══════════════════════════
