@@ -2318,44 +2318,92 @@
       });
 
       /* ═══════════════════════════
-         SHARE FEATURE
+         SHARE FEATURE (BACKEND TOKEN)
          ═══════════════════════════ */
-      function sharePerson() {
+      async function sharePerson() {
         if (!state.currentPerson || state.currentPerson === 'All') {
           showToast('Vui lòng chọn một người cụ thể để chia sẻ.', 'error');
           return;
         }
-        if (!globalEvents || globalEvents.length === 0) {
-          showToast('Không có dữ liệu để chia sẻ.', 'error');
-          return;
+
+        openModal('shareModal');
+        document.getElementById('share-modal-unshared').classList.add('hidden');
+        document.getElementById('share-modal-shared').classList.add('hidden');
+
+        try {
+          const res = await authFetch(`${API}/api/share/${encodeURIComponent(state.currentPerson)}/status`);
+          const json = await res.json();
+          if (res.ok && json.is_shared && json.token) {
+            document.getElementById('share-modal-shared').classList.remove('hidden');
+            const shareUrl = `${window.location.origin}${window.location.pathname}?share=${json.token}`;
+            document.getElementById('share-link-input').value = shareUrl;
+          } else {
+            document.getElementById('share-modal-unshared').classList.remove('hidden');
+          }
+        } catch (e) {
+          showToast('Không thể lấy trạng thái chia sẻ.', 'error');
+          closeModal('shareModal');
         }
+      }
 
-        const shareData = {
-          person: state.currentPerson,
-          events: globalEvents
-        };
+      async function generateShareLink() {
+        try {
+          const res = await authFetch(`${API}/api/share/${encodeURIComponent(state.currentPerson)}`, { method: 'POST' });
+          const json = await res.json();
+          if (!res.ok) throw new Error(json.detail || 'Failed');
+          
+          document.getElementById('share-modal-unshared').classList.add('hidden');
+          document.getElementById('share-modal-shared').classList.remove('hidden');
+          
+          const shareUrl = `${window.location.origin}${window.location.pathname}?share=${json.token}`;
+          document.getElementById('share-link-input').value = shareUrl;
+          
+          showToast('Đã tạo link chia sẻ thành công.', 'success');
+        } catch (e) {
+          showToast('Lỗi khi tạo link chia sẻ: ' + e.message, 'error');
+        }
+      }
 
-        const jsonStr = JSON.stringify(shareData);
-        // UTF-8 base64 encoding
-        const base64Str = btoa(unescape(encodeURIComponent(jsonStr)));
-        const shareUrl = `${window.location.origin}${window.location.pathname}?share_data=${base64Str}`;
-
-        navigator.clipboard.writeText(shareUrl).then(() => {
-          showToast('Đã copy link chia sẻ (Read-only) vào Clipboard!', 'success');
+      function copyShareLink() {
+        const url = document.getElementById('share-link-input').value;
+        if (!url) return;
+        navigator.clipboard.writeText(url).then(() => {
+          showToast('Đã copy link chia sẻ vào Clipboard!', 'success');
         }).catch(err => {
           showToast('Lỗi khi copy link. Vui lòng copy thủ công.', 'error');
-          console.log('Share URL:', shareUrl);
         });
       }
 
-      function loadSharedData() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const shareData = urlParams.get('share_data');
+      async function revokeShareLink() {
+        const confirmed = await customConfirm('Tắt chia sẻ', 'Bạn có chắc muốn tắt chia sẻ? Những người đang có link sẽ không thể xem dữ liệu được nữa.', { isDanger: true, confirmText: 'Tắt chia sẻ' });
+        if (!confirmed) return;
         
-        if (shareData) {
+        try {
+          const res = await authFetch(`${API}/api/share/${encodeURIComponent(state.currentPerson)}`, { method: 'DELETE' });
+          if (!res.ok) throw new Error('Failed');
+          
+          document.getElementById('share-modal-shared').classList.add('hidden');
+          document.getElementById('share-modal-unshared').classList.remove('hidden');
+          showToast('Đã tắt chia sẻ thành công.', 'success');
+        } catch (e) {
+          showToast('Lỗi khi tắt chia sẻ.', 'error');
+        }
+      }
+
+      async function loadSharedData() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const shareToken = urlParams.get('share');
+        
+        if (shareToken) {
           try {
-            const jsonStr = decodeURIComponent(escape(atob(shareData)));
-            const data = JSON.parse(jsonStr);
+            const res = await fetch(`${API}/api/shared/${shareToken}`);
+            const json = await res.json();
+            
+            if (!res.ok) {
+              throw new Error(json.detail || 'Link chia sẻ không hợp lệ hoặc đã hỏng.');
+            }
+            
+            const data = json.data;
             
             // Set state
             state.currentPerson = data.person;
@@ -2402,8 +2450,18 @@
             
             return true; // Indicates we are in share mode
           } catch (e) {
-            console.error('Invalid share data:', e);
-            showToast('Link chia sẻ không hợp lệ hoặc đã hỏng.', 'error');
+            console.error('Share Error:', e);
+            document.body.innerHTML = `
+              <div class="min-h-screen flex items-center justify-center bg-slate-50">
+                <div class="text-center bg-white p-8 rounded-3xl shadow-lg border border-slate-100 max-w-sm">
+                  <div class="text-4xl mb-4">🚫</div>
+                  <h2 class="text-xl font-bold text-slate-800 mb-2">Không thể truy cập</h2>
+                  <p class="text-sm text-slate-500 mb-6">${e.message}</p>
+                  <a href="/" class="rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-indigo-700 inline-block shadow-sm">Về trang chủ</a>
+                </div>
+              </div>
+            `;
+            return true;
           }
         }
         return false;

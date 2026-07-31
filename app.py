@@ -575,3 +575,106 @@ def toggle_status(event_id: str, payload: ToggleStatusPayload = ToggleStatusPayl
         logger.exception("Error toggling status")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
+
+# ==========================================
+# SHARE FEATURE APIS
+# ==========================================
+import uuid
+
+@app.get("/api/share/{person}/status")
+def get_share_status(person: str, req_client: Client = Depends(get_auth_client)):
+    user_id = req_client.user_id
+    try:
+        resp = req_client.table("events").select("payment_method").eq("person", person).eq("user_id", user_id).eq("title", "__person_placeholder__").execute()
+        if not resp.data:
+            return {"status": "ok", "is_shared": False}
+        
+        pm = resp.data[0].get("payment_method", "")
+        if pm.startswith("share_token:"):
+            token = pm.split(":", 1)[1]
+            return {"status": "ok", "is_shared": True, "token": token}
+        
+        return {"status": "ok", "is_shared": False}
+    except Exception:
+        logger.exception("Error getting share status")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+@app.post("/api/share/{person}")
+def generate_share_link(person: str, req_client: Client = Depends(get_auth_client)):
+    user_id = req_client.user_id
+    try:
+        # Check if placeholder exists
+        resp = req_client.table("events").select("id, payment_method").eq("person", person).eq("user_id", user_id).eq("title", "__person_placeholder__").execute()
+        new_token = str(uuid.uuid4().hex)
+        new_pm = f"share_token:{new_token}"
+        
+        if not resp.data:
+            # Create placeholder if it somehow doesn't exist
+            req_client.table("events").insert({
+                "title": "__person_placeholder__",
+                "event_date": date.today().strftime("%Y-%m-%d"),
+                "pay_status": "unpaid",
+                "payment_method": new_pm,
+                "person": person,
+                "user_id": user_id,
+            }).execute()
+        else:
+            # Update existing placeholder
+            event_id = resp.data[0]["id"]
+            req_client.table("events").update({"payment_method": new_pm}).eq("id", event_id).execute()
+            
+        return {"status": "ok", "token": new_token}
+    except Exception:
+        logger.exception("Error generating share link")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+@app.delete("/api/share/{person}")
+def revoke_share_link(person: str, req_client: Client = Depends(get_auth_client)):
+    user_id = req_client.user_id
+    try:
+        resp = req_client.table("events").select("id").eq("person", person).eq("user_id", user_id).eq("title", "__person_placeholder__").execute()
+        if resp.data:
+            event_id = resp.data[0]["id"]
+            req_client.table("events").update({"payment_method": "-"}).eq("id", event_id).execute()
+        return {"status": "ok"}
+    except Exception:
+        logger.exception("Error revoking share link")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+@app.get("/api/shared/{token}")
+def get_shared_data(token: str):
+    try:
+        # Find the placeholder event with this token
+        target_pm = f"share_token:{token}"
+        # We need to use the admin client since this endpoint is public
+        resp = supabase.table("events").select("user_id, person").eq("title", "__person_placeholder__").eq("payment_method", target_pm).execute()
+        
+        if not resp.data:
+            raise HTTPException(status_code=404, detail="Link chia sẻ không tồn tại hoặc đã bị tắt")
+            
+        user_id = resp.data[0]["user_id"]
+        person = resp.data[0]["person"]
+        
+        # Now fetch all events for this person
+        events_resp = supabase.table("events").select("*, event_items(*)").eq("user_id", user_id).eq("person", person).order("event_date", desc=True).execute()
+        
+        filtered_data = [
+            item for item in (events_resp.data or []) if item.get("title") != "__person_placeholder__"
+        ]
+        
+        return {
+            "status": "ok", 
+            "data": {
+                "person": person,
+                "events": filtered_data
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("Error fetching shared data")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
