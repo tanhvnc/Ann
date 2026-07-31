@@ -1900,7 +1900,7 @@
         calendarInstance.render();
 
         // Check for share link first
-        const isShared = loadSharedData();
+        const isShared = await loadSharedData();
         if (!isShared) {
           // Init Auth (will call loadApp if session exists)
           await initSupabaseAuth();
