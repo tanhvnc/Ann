@@ -685,4 +685,9 @@ input, select, button { font: inherit; }
     color: #94a3b8;
     text-align: center;
   }
+
+  /* ── No Print Cover Option ── */
+  body.no-print-cover #cover-image {
+    display: none !important;
+  }
 }

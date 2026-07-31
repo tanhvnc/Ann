@@ -1300,16 +1300,22 @@
 
       function executePrint() {
         const format = document.querySelector('input[name="print_format"]:checked').value;
+        const includeCover = document.getElementById('print-cover-opt').checked;
+        
         closeModal('printModal');
         
         // Apply the chosen format class to the body
         document.body.classList.add(format);
+        if (!includeCover) {
+          document.body.classList.add('no-print-cover');
+        }
         
         // Short delay to allow browser to apply CSS before printing
         setTimeout(() => {
           window.print();
           // Remove the class after printing
           document.body.classList.remove(format);
+          document.body.classList.remove('no-print-cover');
         }, 100);
       }
 
