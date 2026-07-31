@@ -34,7 +34,7 @@
     <!-- FullCalendar -->
     <script src="/libs/fullcalendar.js"></script>
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet" />
     <link rel="icon" type="image/png" href="/logo1.png" />
     <link rel="apple-touch-icon" href="/logo1.png" />
     <link rel="manifest" href="/manifest.json" />
@@ -52,6 +52,12 @@
   </head>
 
   <body>
+    <!-- Read Only Banner -->
+    <div id="read-only-banner" class="hidden w-full bg-amber-500 text-white text-center py-2 font-bold text-sm z-[100] relative shadow-md">
+      👁️ Bạn đang ở chế độ Chỉ xem (Read-only view). 
+      <button onclick="window.location.href='/'" class="underline ml-2">Đăng nhập / Về trang chủ</button>
+    </div>
+
     <!-- Toast -->
     <div id="toast"></div>
 
@@ -186,6 +192,9 @@
               </button>
               <button type="button" onclick="openPrintModal()" class="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 shadow-sm" title="Print debt ledger">
                 <span>🖨️ Print</span>
+              </button>
+              <button type="button" id="share-btn" onclick="sharePerson()" class="rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 shadow-sm" title="Share read-only link">
+                <span>🔗 Share</span>
               </button>
             </div>
 

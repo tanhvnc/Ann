@@ -31,7 +31,7 @@
   --primary: #ff00ff;
   --primary-hover: #cc00cc;
   --border-color: #33ff33;
-  --font-base: 'Courier New', Courier, monospace;
+  --font-base: 'Press Start 2P', monospace;
 }
 
 /* ─── Base ─── */
@@ -732,4 +732,63 @@ input, select, button { font: inherit; }
   body.no-print-cover #cover-image {
     display: none !important;
   }
+}
+
+/* ═══════════════════════════════════════════════
+   PIXEL THEME OVERRIDES
+   ═══════════════════════════════════════════════ */
+[data-theme="pixel"] * {
+  border-radius: 0 !important;
+}
+
+[data-theme="pixel"] .stat-card,
+[data-theme="pixel"] .chart-card,
+[data-theme="pixel"] .table-shell,
+[data-theme="pixel"] .modal-box,
+[data-theme="pixel"] #calendar-container,
+[data-theme="pixel"] .toolbar {
+  border: 4px solid var(--border-color) !important;
+  box-shadow: 6px 6px 0px var(--primary) !important;
+  background-image: none !important;
+}
+
+[data-theme="pixel"] button,
+[data-theme="pixel"] .nav-btn,
+[data-theme="pixel"] .person-tab {
+  border: 2px solid var(--border-color) !important;
+  box-shadow: 4px 4px 0px var(--primary) !important;
+  transition: transform 0.1s !important;
+  text-transform: uppercase !important;
+  font-size: 0.65rem !important; /* Smaller text for pixel font to fit */
+}
+[data-theme="pixel"] button:active,
+[data-theme="pixel"] .nav-btn:active,
+[data-theme="pixel"] .person-tab:active {
+  transform: translate(4px, 4px) !important;
+  box-shadow: 0px 0px 0px var(--primary) !important;
+}
+
+[data-theme="pixel"] .form-input {
+  border: 4px solid var(--border-color) !important;
+  box-shadow: 4px 4px 0px var(--primary) !important;
+  font-size: 0.7rem !important;
+}
+
+[data-theme="pixel"] h1, [data-theme="pixel"] h2, [data-theme="pixel"] h3, [data-theme="pixel"] h4 {
+  text-transform: uppercase;
+  text-shadow: 2px 2px 0px var(--primary);
+  letter-spacing: -1px;
+}
+
+[data-theme="pixel"] td, [data-theme="pixel"] th {
+  font-size: 0.6rem !important;
+  border-bottom: 2px dashed var(--border-color) !important;
+}
+
+[data-theme="pixel"] .summary-row {
+  border-top: 4px solid var(--border-color) !important;
+}
+
+[data-theme="pixel"] .fc-toolbar-title {
+  font-size: 0.8rem !important;
 }

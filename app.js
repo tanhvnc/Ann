@@ -1899,8 +1899,12 @@
         // Render calendar (it's hidden, but we init the instance)
         calendarInstance.render();
 
-        // Init Auth (will call loadApp if session exists)
-        await initSupabaseAuth();
+        // Check for share link first
+        const isShared = loadSharedData();
+        if (!isShared) {
+          // Init Auth (will call loadApp if session exists)
+          await initSupabaseAuth();
+        }
       });
 
       async function loadApp() {
@@ -2312,3 +2316,95 @@
           }, 3000); // 3 giây hiển thị thoại
         });
       });
+
+      /* ═══════════════════════════
+         SHARE FEATURE
+         ═══════════════════════════ */
+      function sharePerson() {
+        if (!state.currentPerson || state.currentPerson === 'All') {
+          showToast('Vui lòng chọn một người cụ thể để chia sẻ.', 'error');
+          return;
+        }
+        if (!globalEvents || globalEvents.length === 0) {
+          showToast('Không có dữ liệu để chia sẻ.', 'error');
+          return;
+        }
+
+        const shareData = {
+          person: state.currentPerson,
+          events: globalEvents
+        };
+
+        const jsonStr = JSON.stringify(shareData);
+        // UTF-8 base64 encoding
+        const base64Str = btoa(unescape(encodeURIComponent(jsonStr)));
+        const shareUrl = `${window.location.origin}${window.location.pathname}?share_data=${base64Str}`;
+
+        navigator.clipboard.writeText(shareUrl).then(() => {
+          showToast('Đã copy link chia sẻ (Read-only) vào Clipboard!', 'success');
+        }).catch(err => {
+          showToast('Lỗi khi copy link. Vui lòng copy thủ công.', 'error');
+          console.log('Share URL:', shareUrl);
+        });
+      }
+
+      function loadSharedData() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const shareData = urlParams.get('share_data');
+        
+        if (shareData) {
+          try {
+            const jsonStr = decodeURIComponent(escape(atob(shareData)));
+            const data = JSON.parse(jsonStr);
+            
+            // Set state
+            state.currentPerson = data.person;
+            globalEvents = data.events;
+            
+            // Render UI
+            document.getElementById('read-only-banner').classList.remove('hidden');
+            document.body.classList.add('read-only-mode');
+            
+            // Disable editing UI via CSS
+            const style = document.createElement('style');
+            style.textContent = `
+              .read-only-mode .sidebar { display: none !important; }
+              .read-only-mode .action-col { display: none !important; }
+              .read-only-mode button[onclick*="openEventModal"],
+              .read-only-mode button[onclick*="openDetailModal"],
+              .read-only-mode #new-person-btn,
+              .read-only-mode #change-cover-btn,
+              .read-only-mode #share-btn,
+              .read-only-mode #user-profile-badge { display: none !important; }
+            `;
+            document.head.appendChild(style);
+
+            // Hide auth modal if it opens
+            const authModal = document.getElementById('authModal');
+            if (authModal) {
+              authModal.classList.remove('open');
+              authModal.style.display = 'none';
+            }
+
+            // Update title
+            const pageTitle = document.getElementById('page-title');
+            if (pageTitle) pageTitle.textContent = `Debt Tracker: ${data.person}`;
+            const headerSubtitle = document.getElementById('header-subtitle');
+            if (headerSubtitle) headerSubtitle.textContent = "Bản báo cáo chỉ xem (Read-only)";
+
+            // Make sure home view is shown
+            document.getElementById('view-home').classList.remove('hidden');
+            
+            // Render data
+            renderHomeView();
+            renderAnalytics();
+            updateCalendarEvents();
+            
+            return true; // Indicates we are in share mode
+          } catch (e) {
+            console.error('Invalid share data:', e);
+            showToast('Link chia sẻ không hợp lệ hoặc đã hỏng.', 'error');
+          }
+        }
+        return false;
+      }
