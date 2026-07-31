@@ -653,7 +653,7 @@ def get_shared_data(token: str):
         resp = supabase.table("events").select("user_id, person").eq("title", "__person_placeholder__").eq("payment_method", target_pm).execute()
         
         if not resp.data:
-            raise HTTPException(status_code=404, detail="Link chia sẻ không tồn tại hoặc đã bị tắt")
+            raise HTTPException(status_code=404, detail="The share link is invalid or has been revoked")
             
         user_id = resp.data[0]["user_id"]
         person = resp.data[0]["person"]

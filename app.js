@@ -2322,7 +2322,7 @@
          ═══════════════════════════ */
       async function sharePerson() {
         if (!state.currentPerson || state.currentPerson === 'All') {
-          showToast('Vui lòng chọn một người cụ thể để chia sẻ.', 'error');
+          showToast('Please select a specific person to share.', 'error');
           return;
         }
 
@@ -2341,7 +2341,7 @@
             document.getElementById('share-modal-unshared').classList.remove('hidden');
           }
         } catch (e) {
-          showToast('Không thể lấy trạng thái chia sẻ.', 'error');
+          showToast('Unable to check share status.', 'error');
           closeModal('shareModal');
         }
       }
@@ -2358,9 +2358,9 @@
           const shareUrl = `${window.location.origin}${window.location.pathname}?share=${json.token}`;
           document.getElementById('share-link-input').value = shareUrl;
           
-          showToast('Đã tạo link chia sẻ thành công.', 'success');
+          showToast('Share link created successfully.', 'success');
         } catch (e) {
-          showToast('Lỗi khi tạo link chia sẻ: ' + e.message, 'error');
+          showToast('Error creating share link: ' + e.message, 'error');
         }
       }
 
@@ -2368,14 +2368,14 @@
         const url = document.getElementById('share-link-input').value;
         if (!url) return;
         navigator.clipboard.writeText(url).then(() => {
-          showToast('Đã copy link chia sẻ vào Clipboard!', 'success');
+          showToast('Share link copied to clipboard!', 'success');
         }).catch(err => {
-          showToast('Lỗi khi copy link. Vui lòng copy thủ công.', 'error');
+          showToast('Failed to copy link. Please copy manually.', 'error');
         });
       }
 
       async function revokeShareLink() {
-        const confirmed = await customConfirm('Tắt chia sẻ', 'Bạn có chắc muốn tắt chia sẻ? Những người đang có link sẽ không thể xem dữ liệu được nữa.', { isDanger: true, confirmText: 'Tắt chia sẻ' });
+        const confirmed = await customConfirm('Revoke Share', 'Are you sure you want to revoke this share link? People who have the link will no longer be able to view the data.', { isDanger: true, confirmText: 'Revoke Link' });
         if (!confirmed) return;
         
         try {
@@ -2384,9 +2384,9 @@
           
           document.getElementById('share-modal-shared').classList.add('hidden');
           document.getElementById('share-modal-unshared').classList.remove('hidden');
-          showToast('Đã tắt chia sẻ thành công.', 'success');
+          showToast('Share link revoked successfully.', 'success');
         } catch (e) {
-          showToast('Lỗi khi tắt chia sẻ.', 'error');
+          showToast('Error revoking share link.', 'error');
         }
       }
 
@@ -2400,7 +2400,7 @@
             const json = await res.json();
             
             if (!res.ok) {
-              throw new Error(json.detail || 'Link chia sẻ không hợp lệ hoặc đã hỏng.');
+              throw new Error(json.detail || 'The share link is invalid or has been revoked.');
             }
             
             const data = json.data;
@@ -2438,7 +2438,7 @@
             const pageTitle = document.getElementById('page-title');
             if (pageTitle) pageTitle.textContent = `Debt Tracker: ${data.person}`;
             const headerSubtitle = document.getElementById('header-subtitle');
-            if (headerSubtitle) headerSubtitle.textContent = "Bản báo cáo chỉ xem (Read-only)";
+            if (headerSubtitle) headerSubtitle.textContent = "Read-only report";
 
             // Make sure home view is shown
             document.getElementById('view-home').classList.remove('hidden');
@@ -2455,9 +2455,9 @@
               <div class="min-h-screen flex items-center justify-center bg-slate-50">
                 <div class="text-center bg-white p-8 rounded-3xl shadow-lg border border-slate-100 max-w-sm">
                   <div class="text-4xl mb-4">🚫</div>
-                  <h2 class="text-xl font-bold text-slate-800 mb-2">Không thể truy cập</h2>
+                  <h2 class="text-xl font-bold text-slate-800 mb-2">Access Denied</h2>
                   <p class="text-sm text-slate-500 mb-6">${e.message}</p>
-                  <a href="/" class="rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-indigo-700 inline-block shadow-sm">Về trang chủ</a>
+                  <a href="/" class="rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-indigo-700 inline-block shadow-sm">Back to Home</a>
                 </div>
               </div>
             `;
