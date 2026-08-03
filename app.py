@@ -134,6 +134,17 @@ class ItemUpdate(BaseModel):
     amount: float | None = Field(default=None, description="Amount of the item, can be negative for offset")
 
 
+class DailyTaskCreate(BaseModel):
+    title: str = Field(..., max_length=200)
+    task_date: str = Field(..., max_length=20)
+
+    _validate_date = field_validator("task_date")(validate_date_format)
+
+
+class DailyTaskUpdate(BaseModel):
+    is_completed: bool | None = None
+
+
 class PersonCreate(BaseModel):
     name: str = Field(..., max_length=100)
 
@@ -573,6 +584,74 @@ def toggle_status(event_id: str, payload: ToggleStatusPayload = ToggleStatusPayl
         raise
     except Exception:
         logger.exception("Error toggling status")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+# ==========================================
+# DAILY TASKS APIS
+# ==========================================
+
+@app.get("/api/daily-tasks")
+def get_daily_tasks(date: str | None = None, req_client: Client = Depends(get_auth_client)):
+    user_id = req_client.user_id
+    try:
+        from datetime import date as dt_date
+        target_date = date or dt_date.today().strftime("%Y-%m-%d")
+        response = req_client.table("daily_tasks").select("*").eq("user_id", user_id).eq("task_date", target_date).order("created_at").execute()
+        return {"status": "ok", "data": response.data or []}
+    except Exception:
+        logger.exception("Error getting daily tasks")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+@app.post("/api/daily-tasks", status_code=201)
+def create_daily_task(payload: DailyTaskCreate, req_client: Client = Depends(get_auth_client)):
+    user_id = req_client.user_id
+    try:
+        response = (
+            req_client.table("daily_tasks")
+            .insert(
+                {
+                    "title": payload.title,
+                    "task_date": payload.task_date,
+                    "user_id": user_id,
+                }
+            )
+            .execute()
+        )
+        return {"status": "ok", "data": response.data[0] if response.data else None}
+    except Exception:
+        logger.exception("Error creating daily task")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+@app.put("/api/daily-tasks/{task_id}")
+def update_daily_task(task_id: str, payload: DailyTaskUpdate, req_client: Client = Depends(get_auth_client)):
+    user_id = req_client.user_id
+    try:
+        update_data = {k: v for k, v in payload.model_dump(exclude_none=True).items() if v is not None}
+        if not update_data:
+             return {"status": "ok", "message": "No data to update"}
+        
+        response = req_client.table("daily_tasks").update(update_data).eq("id", task_id).eq("user_id", user_id).execute()
+        if not response.data:
+            raise HTTPException(status_code=404, detail="Task not found")
+        return {"status": "ok", "data": response.data[0]}
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("Error updating daily task")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+@app.delete("/api/daily-tasks/{task_id}")
+def delete_daily_task(task_id: str, req_client: Client = Depends(get_auth_client)):
+    user_id = req_client.user_id
+    try:
+        req_client.table("daily_tasks").delete().eq("id", task_id).eq("user_id", user_id).execute()
+        return {"status": "ok", "message": f"Deleted task {task_id}"}
+    except Exception:
+        logger.exception("Error deleting daily task")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 

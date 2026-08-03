@@ -850,3 +850,75 @@ input, select, button { font: inherit; }
 [data-theme="hacker"] .summary-row {
   border-top: 2px solid var(--border-color) !important;
 }
+
+/* ═══════════════════════════════════════════════
+   DAILY TASKS
+   ═══════════════════════════════════════════════ */
+.daily-task-item {
+  transition: all 0.3s ease;
+  background-color: #ffffff;
+}
+.daily-task-checkbox {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: transparent;
+  flex-shrink: 0;
+}
+.daily-task-checkbox:hover {
+  border-color: #6366f1;
+  background-color: #eef2ff;
+}
+.daily-task-checkbox.checked {
+  background-color: #10b981;
+  border-color: #10b981;
+}
+.daily-task-checkbox.checked::after {
+  content: '';
+  width: 6px;
+  height: 12px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg) translate(-1px, -2px);
+}
+.daily-task-title {
+  transition: all 0.3s ease;
+  position: relative;
+  display: inline-block;
+  color: #334155;
+  font-weight: 500;
+}
+.daily-task-title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 0;
+  height: 2px;
+  background-color: #94a3b8;
+  transition: width 0.3s ease;
+}
+.daily-task-item.completed .daily-task-title {
+  color: #94a3b8;
+}
+.daily-task-item.completed .daily-task-title::after {
+  width: 100%;
+}
+.daily-task-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="dark"] .daily-task-item, [data-theme="pixel"] .daily-task-item, [data-theme="hacker"] .daily-task-item {
+  background-color: var(--bg-surface);
+}
+[data-theme="dark"] .daily-task-title { color: #e2e8f0; }
+[data-theme="dark"] .daily-task-item.completed .daily-task-title { color: #64748b; }
+[data-theme="dark"] .daily-task-checkbox { border-color: #475569; }
+[data-theme="dark"] .daily-task-checkbox.checked { background-color: #10b981; border-color: #10b981; }

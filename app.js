@@ -402,6 +402,7 @@
         document.getElementById('view-home').classList.add('hidden');
         document.getElementById('view-analytics').classList.add('hidden');
         document.getElementById('view-calendar').classList.add('hidden');
+        if (document.getElementById('view-daily-tasks')) document.getElementById('view-daily-tasks').classList.add('hidden');
 
         // Show target with fade animation
         const targetView = document.getElementById(`view-${viewId}`);
@@ -421,6 +422,7 @@
           if (viewId === 'home') pageTitle.textContent = 'Debt Tracker';
           else if (viewId === 'analytics') pageTitle.textContent = 'Total';
           else if (viewId === 'calendar') pageTitle.textContent = 'Calendar';
+          else if (viewId === 'daily-tasks') pageTitle.textContent = 'My Day';
         }
 
         // Toggle + New Person button visibility
@@ -435,6 +437,10 @@
           setTimeout(() => {
             if (calendarInstance) calendarInstance.render();
           }, 100);
+        }
+
+        if (viewId === 'daily-tasks') {
+          loadDailyTasks();
         }
       }
 
@@ -484,6 +490,188 @@
 
         applyTheme(nextTheme);
         showToast(`Theme changed to ${nextTheme.charAt(0).toUpperCase() + nextTheme.slice(1)}`, 'success');
+      }
+
+      /* ═══════════════════════════
+         DAILY TASKS
+         ═══════════════════════════ */
+      let dailyTasks = [];
+
+      async function loadDailyTasks() {
+        const listEl = document.getElementById('daily-tasks-list');
+        if (!listEl) return;
+        
+        // Cập nhật ngày tháng trên UI
+        const today = new Date();
+        const options = { weekday: 'long', month: 'long', day: 'numeric' };
+        document.getElementById('daily-tasks-date-display').textContent = today.toLocaleDateString('en-US', options);
+
+        try {
+          // Lấy ngày dưới định dạng YYYY-MM-DD
+          const year = today.getFullYear();
+          const month = String(today.getMonth() + 1).padStart(2, '0');
+          const day = String(today.getDate()).padStart(2, '0');
+          const dateStr = `${year}-${month}-${day}`;
+
+          const res = await authFetch(`${API}/api/daily-tasks?date=${dateStr}`);
+          if (res.ok) {
+            const result = await res.json();
+            dailyTasks = result.data || [];
+            renderDailyTasks();
+          } else {
+            throw new Error('Failed to load tasks');
+          }
+        } catch (error) {
+          console.error(error);
+          showToast('Could not load daily tasks.', 'error');
+          listEl.innerHTML = '<div class="text-center text-slate-400 py-10">Error loading tasks.</div>';
+        }
+      }
+
+      function renderDailyTasks() {
+        const listEl = document.getElementById('daily-tasks-list');
+        if (!listEl) return;
+        
+        if (dailyTasks.length === 0) {
+          listEl.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-40 text-slate-400 text-center">
+              <span class="text-4xl mb-3">🌱</span>
+              <p class="text-sm font-medium">No tasks for today yet.</p>
+              <p class="text-xs">Add your first task above to get started.</p>
+            </div>
+          `;
+          updateDailyProgress();
+          return;
+        }
+
+        let html = '';
+        dailyTasks.forEach(task => {
+          const isCompleted = task.is_completed;
+          html += `
+            <div class="daily-task-item flex items-center justify-between p-4 rounded-2xl border border-slate-100 ${isCompleted ? 'completed bg-slate-50' : 'bg-white'} group">
+              <div class="flex items-center gap-4 flex-1 overflow-hidden" onclick="toggleDailyTask('${task.id}', ${!isCompleted})">
+                <div class="daily-task-checkbox ${isCompleted ? 'checked' : ''}"></div>
+                <span class="daily-task-title text-base truncate cursor-pointer">${escapeHTML(task.title)}</span>
+              </div>
+              <button onclick="deleteDailyTask('${task.id}')" class="w-8 h-8 flex items-center justify-center rounded-full text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition opacity-0 group-hover:opacity-100 focus:opacity-100 ml-2 flex-shrink-0" title="Delete Task">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+              </button>
+            </div>
+          `;
+        });
+        
+        listEl.innerHTML = html;
+        updateDailyProgress();
+      }
+
+      function updateDailyProgress() {
+        if (dailyTasks.length === 0) {
+           document.getElementById('daily-tasks-progress-text').textContent = '0%';
+           document.getElementById('daily-tasks-progress-bar').style.width = '0%';
+           return;
+        }
+        const completed = dailyTasks.filter(t => t.is_completed).length;
+        const total = dailyTasks.length;
+        const percentage = Math.round((completed / total) * 100);
+        
+        document.getElementById('daily-tasks-progress-text').textContent = `${percentage}%`;
+        document.getElementById('daily-tasks-progress-bar').style.width = `${percentage}%`;
+      }
+
+      async function submitDailyTask() {
+        const input = document.getElementById('daily-task-input');
+        const submitBtn = document.getElementById('daily-task-submit-btn');
+        const title = input.value.trim();
+        if (!title) return;
+
+        input.disabled = true;
+        submitBtn.disabled = true;
+
+        try {
+          const today = new Date();
+          const year = today.getFullYear();
+          const month = String(today.getMonth() + 1).padStart(2, '0');
+          const day = String(today.getDate()).padStart(2, '0');
+          const dateStr = `${year}-${month}-${day}`;
+
+          const payload = { title: title, task_date: dateStr };
+          
+          const res = await authFetch(`${API}/api/daily-tasks`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          
+          if (res.ok) {
+            const result = await res.json();
+            dailyTasks.push(result.data);
+            input.value = '';
+            renderDailyTasks();
+            
+            // Add a small satisfying pop animation to the progress bar
+            const bar = document.getElementById('daily-tasks-progress-bar');
+            bar.classList.add('scale-105');
+            setTimeout(() => bar.classList.remove('scale-105'), 200);
+          } else {
+            throw new Error('Server returned an error');
+          }
+        } catch (error) {
+          console.error(error);
+          showToast('Error creating task', 'error');
+        } finally {
+          input.disabled = false;
+          submitBtn.disabled = false;
+          input.focus();
+        }
+      }
+
+      async function toggleDailyTask(taskId, newStatus) {
+        // Optimistic UI update
+        const task = dailyTasks.find(t => t.id === taskId);
+        if (!task) return;
+        task.is_completed = newStatus;
+        renderDailyTasks();
+
+        try {
+          const res = await authFetch(`${API}/api/daily-tasks/${taskId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ is_completed: newStatus })
+          });
+          if (!res.ok) {
+            throw new Error('Failed to update');
+          }
+        } catch (error) {
+          console.error(error);
+          // Revert optimistic update
+          task.is_completed = !newStatus;
+          renderDailyTasks();
+          showToast('Error updating task', 'error');
+        }
+      }
+
+      async function deleteDailyTask(taskId) {
+        // Optimistic UI update
+        const taskIndex = dailyTasks.findIndex(t => t.id === taskId);
+        if (taskIndex === -1) return;
+        const backupTask = dailyTasks[taskIndex];
+        dailyTasks.splice(taskIndex, 1);
+        renderDailyTasks();
+
+        try {
+          const res = await authFetch(`${API}/api/daily-tasks/${taskId}`, {
+            method: 'DELETE'
+          });
+          if (!res.ok) {
+            throw new Error('Failed to delete');
+          }
+        } catch (error) {
+          console.error(error);
+          // Revert optimistic update
+          dailyTasks.splice(taskIndex, 0, backupTask);
+          renderDailyTasks();
+          showToast('Error deleting task', 'error');
+        }
       }
 
       /* ═══════════════════════════
