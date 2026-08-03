@@ -416,13 +416,36 @@
         const activeBtn = document.getElementById(`nav-${viewId}`);
         if (activeBtn) activeBtn.classList.add('active');
 
-        // Update Header Title
+        // Update Header Title and specific UI elements
         const pageTitle = document.getElementById('page-title');
+        const headerSubtitle = document.getElementById('header-subtitle');
+        const peopleTabsWrapper = document.getElementById('people-tabs')?.parentElement;
+        const coverImage = document.getElementById('cover-image');
+        const logoWrapper = document.getElementById('header-logo-wrapper');
+
         if (pageTitle) {
           if (viewId === 'home') pageTitle.textContent = 'Debt Tracker';
           else if (viewId === 'analytics') pageTitle.textContent = 'Total';
           else if (viewId === 'calendar') pageTitle.textContent = 'Calendar';
           else if (viewId === 'daily-tasks') pageTitle.textContent = 'My Day';
+        }
+
+        if (viewId === 'daily-tasks') {
+          if (headerSubtitle) headerSubtitle.classList.add('hidden');
+          if (peopleTabsWrapper) peopleTabsWrapper.classList.add('hidden');
+          if (coverImage) coverImage.classList.add('hidden');
+          if (logoWrapper) {
+            logoWrapper.classList.remove('-mt-12', 'sm:-mt-16');
+            logoWrapper.classList.add('mt-4');
+          }
+        } else {
+          if (headerSubtitle) headerSubtitle.classList.remove('hidden');
+          if (peopleTabsWrapper) peopleTabsWrapper.classList.remove('hidden');
+          if (coverImage) coverImage.classList.remove('hidden');
+          if (logoWrapper) {
+            logoWrapper.classList.add('-mt-12', 'sm:-mt-16');
+            logoWrapper.classList.remove('mt-4');
+          }
         }
 
         // Toggle + New Person button visibility
