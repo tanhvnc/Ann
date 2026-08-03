@@ -134,15 +134,15 @@ class ItemUpdate(BaseModel):
     amount: float | None = Field(default=None, description="Amount of the item, can be negative for offset")
 
 
-class DailyTaskCreate(BaseModel):
+class DailyHabitCreate(BaseModel):
     title: str = Field(..., max_length=200)
+
+
+class HabitCompletionToggle(BaseModel):
+    is_completed: bool
     task_date: str = Field(..., max_length=20)
 
     _validate_date = field_validator("task_date")(validate_date_format)
-
-
-class DailyTaskUpdate(BaseModel):
-    is_completed: bool | None = None
 
 
 class PersonCreate(BaseModel):
@@ -597,8 +597,22 @@ def get_daily_tasks(date: str | None = None, req_client: Client = Depends(get_au
     try:
         from datetime import date as dt_date
         target_date = date or dt_date.today().strftime("%Y-%m-%d")
-        response = req_client.table("daily_tasks").select("*").eq("user_id", user_id).eq("task_date", target_date).order("created_at").execute()
-        return {"status": "ok", "data": response.data or []}
+        
+        habits_resp = req_client.table("daily_habits").select("*").eq("user_id", user_id).order("created_at").execute()
+        habits = habits_resp.data or []
+        
+        comps_resp = req_client.table("daily_habit_completions").select("*").eq("user_id", user_id).eq("task_date", target_date).execute()
+        completions = {c['habit_id']: c['is_completed'] for c in (comps_resp.data or [])}
+        
+        merged = []
+        for h in habits:
+            merged.append({
+                "id": h['id'],
+                "title": h['title'],
+                "is_completed": completions.get(h['id'], False)
+            })
+            
+        return {"status": "ok", "data": merged}
     except Exception:
         logger.exception("Error getting daily tasks")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -610,23 +624,25 @@ def get_daily_tasks_stats(req_client: Client = Depends(get_auth_client)):
     try:
         from datetime import date as dt_date, timedelta, datetime
         
-        response = req_client.table("daily_tasks").select("task_date, is_completed").eq("user_id", user_id).execute()
-        tasks = response.data or []
+        habits_resp = req_client.table("daily_habits").select("id").eq("user_id", user_id).execute()
+        total_habits = len(habits_resp.data or [])
+
+        # Fetch completions that are True
+        response = req_client.table("daily_habit_completions").select("task_date").eq("user_id", user_id).eq("is_completed", True).execute()
+        completions = response.data or []
         
         date_stats = {}
         total_tasks_completed = 0
-        for t in tasks:
-            d = t['task_date']
+        for c in completions:
+            d = c['task_date']
             if d not in date_stats:
-                date_stats[d] = {'total': 0, 'completed': 0}
-            date_stats[d]['total'] += 1
-            if t['is_completed']:
-                date_stats[d]['completed'] += 1
-                total_tasks_completed += 1
+                date_stats[d] = 0
+            date_stats[d] += 1
+            total_tasks_completed += 1
                 
         completed_dates = set()
-        for d, stats in date_stats.items():
-            if stats['total'] > 0 and stats['total'] == stats['completed']:
+        for d, count in date_stats.items():
+            if count == total_habits and total_habits > 0:
                 completed_dates.add(d)
                 
         today = dt_date.today()
@@ -681,15 +697,14 @@ def get_daily_tasks_stats(req_client: Client = Depends(get_auth_client)):
 
 
 @app.post("/api/daily-tasks", status_code=201)
-def create_daily_task(payload: DailyTaskCreate, req_client: Client = Depends(get_auth_client)):
+def create_daily_task(payload: DailyHabitCreate, req_client: Client = Depends(get_auth_client)):
     user_id = req_client.user_id
     try:
         response = (
-            req_client.table("daily_tasks")
+            req_client.table("daily_habits")
             .insert(
                 {
                     "title": payload.title,
-                    "task_date": payload.task_date,
                     "user_id": user_id,
                 }
             )
@@ -697,37 +712,42 @@ def create_daily_task(payload: DailyTaskCreate, req_client: Client = Depends(get
         )
         return {"status": "ok", "data": response.data[0] if response.data else None}
     except Exception:
-        logger.exception("Error creating daily task")
+        logger.exception("Error creating daily habit")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
-@app.put("/api/daily-tasks/{task_id}")
-def update_daily_task(task_id: str, payload: DailyTaskUpdate, req_client: Client = Depends(get_auth_client)):
+@app.put("/api/daily-tasks/{habit_id}")
+def update_daily_task(habit_id: str, payload: HabitCompletionToggle, req_client: Client = Depends(get_auth_client)):
     user_id = req_client.user_id
     try:
-        update_data = {k: v for k, v in payload.model_dump(exclude_none=True).items() if v is not None}
-        if not update_data:
-             return {"status": "ok", "message": "No data to update"}
+        # Upsert the completion record
+        response = req_client.table("daily_habit_completions").upsert({
+            "habit_id": habit_id,
+            "user_id": user_id,
+            "task_date": payload.task_date,
+            "is_completed": payload.is_completed
+        }, on_conflict="habit_id,task_date").execute()
         
-        response = req_client.table("daily_tasks").update(update_data).eq("id", task_id).eq("user_id", user_id).execute()
-        if not response.data:
-            raise HTTPException(status_code=404, detail="Task not found")
-        return {"status": "ok", "data": response.data[0]}
+        return {"status": "ok", "data": response.data[0] if response.data else None}
     except HTTPException:
         raise
     except Exception:
-        logger.exception("Error updating daily task")
+        logger.exception("Error updating daily habit completion")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
-@app.delete("/api/daily-tasks/{task_id}")
-def delete_daily_task(task_id: str, req_client: Client = Depends(get_auth_client)):
+@app.delete("/api/daily-tasks/{habit_id}")
+def delete_daily_task(habit_id: str, req_client: Client = Depends(get_auth_client)):
     user_id = req_client.user_id
     try:
-        req_client.table("daily_tasks").delete().eq("id", task_id).eq("user_id", user_id).execute()
-        return {"status": "ok", "message": f"Deleted task {task_id}"}
+        response = req_client.table("daily_habits").delete().eq("id", habit_id).eq("user_id", user_id).execute()
+        if not response.data:
+            raise HTTPException(status_code=404, detail="Task not found")
+        return {"status": "ok", "message": "Task deleted"}
+    except HTTPException:
+        raise
     except Exception:
-        logger.exception("Error deleting daily task")
+        logger.exception("Error deleting daily habit")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 

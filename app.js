@@ -664,13 +664,7 @@
         submitBtn.disabled = true;
 
         try {
-          const today = new Date();
-          const year = today.getFullYear();
-          const month = String(today.getMonth() + 1).padStart(2, '0');
-          const day = String(today.getDate()).padStart(2, '0');
-          const dateStr = `${year}-${month}-${day}`;
-
-          const payload = { title: title, task_date: dateStr };
+          const payload = { title: title };
           
           const res = await authFetch(`${API}/api/daily-tasks`, {
             method: 'POST',
@@ -710,10 +704,15 @@
         renderDailyTasks();
 
         try {
+          const year = currentDailyDate.getFullYear();
+          const month = String(currentDailyDate.getMonth() + 1).padStart(2, '0');
+          const day = String(currentDailyDate.getDate()).padStart(2, '0');
+          const dateStr = `${year}-${month}-${day}`;
+
           const res = await authFetch(`${API}/api/daily-tasks/${taskId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ is_completed: newStatus })
+            body: JSON.stringify({ is_completed: newStatus, task_date: dateStr })
           });
           if (!res.ok) {
             throw new Error('Failed to update');
