@@ -604,6 +604,82 @@ def get_daily_tasks(date: str | None = None, req_client: Client = Depends(get_au
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
+@app.get("/api/daily-tasks/stats")
+def get_daily_tasks_stats(req_client: Client = Depends(get_auth_client)):
+    user_id = req_client.user_id
+    try:
+        from datetime import date as dt_date, timedelta, datetime
+        
+        response = req_client.table("daily_tasks").select("task_date, is_completed").eq("user_id", user_id).execute()
+        tasks = response.data or []
+        
+        date_stats = {}
+        total_tasks_completed = 0
+        for t in tasks:
+            d = t['task_date']
+            if d not in date_stats:
+                date_stats[d] = {'total': 0, 'completed': 0}
+            date_stats[d]['total'] += 1
+            if t['is_completed']:
+                date_stats[d]['completed'] += 1
+                total_tasks_completed += 1
+                
+        completed_dates = set()
+        for d, stats in date_stats.items():
+            if stats['total'] > 0 and stats['total'] == stats['completed']:
+                completed_dates.add(d)
+                
+        today = dt_date.today()
+        
+        def calculate_streak(start_date):
+            streak = 0
+            curr_date = start_date
+            while curr_date.strftime("%Y-%m-%d") in completed_dates:
+                streak += 1
+                curr_date -= timedelta(days=1)
+            return streak
+
+        current_streak = 0
+        if today.strftime("%Y-%m-%d") in completed_dates:
+            current_streak = calculate_streak(today)
+        else:
+            yesterday = today - timedelta(days=1)
+            if yesterday.strftime("%Y-%m-%d") in completed_dates:
+                current_streak = calculate_streak(yesterday)
+                
+        longest_streak = 0
+        visited = set()
+        for d_str in completed_dates:
+            if d_str in visited:
+                continue
+            d_obj = datetime.strptime(d_str, "%Y-%m-%d").date()
+            next_day = d_obj + timedelta(days=1)
+            if next_day.strftime("%Y-%m-%d") in completed_dates:
+                continue
+            
+            streak = 0
+            curr_date = d_obj
+            while curr_date.strftime("%Y-%m-%d") in completed_dates:
+                visited.add(curr_date.strftime("%Y-%m-%d"))
+                streak += 1
+                curr_date -= timedelta(days=1)
+                
+            if streak > longest_streak:
+                longest_streak = streak
+                
+        return {
+            "status": "ok", 
+            "data": {
+                "current_streak": current_streak,
+                "longest_streak": longest_streak,
+                "total_completed": total_tasks_completed
+            }
+        }
+    except Exception:
+        logger.exception("Error calculating daily tasks stats")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
 @app.post("/api/daily-tasks", status_code=201)
 def create_daily_task(payload: DailyTaskCreate, req_client: Client = Depends(get_auth_client)):
     user_id = req_client.user_id

@@ -519,21 +519,73 @@
          DAILY TASKS
          ═══════════════════════════ */
       let dailyTasks = [];
+      let currentDailyDate = new Date();
+
+      function changeDailyDate(offsetDays) {
+        currentDailyDate.setDate(currentDailyDate.getDate() + offsetDays);
+        loadDailyTasks();
+      }
+
+      function resetDailyDate() {
+        currentDailyDate = new Date();
+        loadDailyTasks();
+      }
+
+      async function loadDailyStats() {
+        try {
+          const res = await authFetch(`${API}/api/daily-tasks/stats`);
+          if (res.ok) {
+            const result = await res.json();
+            const stats = result.data;
+            const currentStreakEl = document.getElementById('stat-current-streak');
+            const longestStreakEl = document.getElementById('stat-longest-streak');
+            const totalCompletedEl = document.getElementById('stat-total-completed');
+            
+            if (currentStreakEl) {
+               // Add a simple pop animation if value changes
+               if (currentStreakEl.textContent !== String(stats.current_streak)) {
+                   currentStreakEl.parentElement.classList.add('scale-105', 'bg-indigo-100');
+                   setTimeout(() => currentStreakEl.parentElement.classList.remove('scale-105', 'bg-indigo-100'), 300);
+               }
+               currentStreakEl.textContent = stats.current_streak;
+            }
+            if (longestStreakEl) longestStreakEl.textContent = stats.longest_streak;
+            if (totalCompletedEl) totalCompletedEl.textContent = stats.total_completed;
+          }
+        } catch (error) {
+          console.error('Error loading daily stats:', error);
+        }
+      }
 
       async function loadDailyTasks() {
         const listEl = document.getElementById('daily-tasks-list');
         if (!listEl) return;
         
-        // Cập nhật ngày tháng trên UI
         const today = new Date();
+        const isToday = currentDailyDate.toDateString() === today.toDateString();
+        
+        // Cập nhật ngày tháng trên UI
         const options = { weekday: 'long', month: 'long', day: 'numeric' };
-        document.getElementById('daily-tasks-date-display').textContent = today.toLocaleDateString('en-US', options);
+        let dateLabel = isToday ? 'Today' : currentDailyDate.toLocaleDateString('en-US', options);
+        if (!isToday) {
+           const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+           const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+           if (currentDailyDate.toDateString() === yesterday.toDateString()) dateLabel = 'Yesterday';
+           if (currentDailyDate.toDateString() === tomorrow.toDateString()) dateLabel = 'Tomorrow';
+        }
+        
+        document.getElementById('daily-tasks-date-display').textContent = dateLabel;
+        
+        const todayBtn = document.getElementById('daily-tasks-today-btn');
+        if (todayBtn) {
+            if (isToday) todayBtn.classList.add('hidden');
+            else todayBtn.classList.remove('hidden');
+        }
 
         try {
-          // Lấy ngày dưới định dạng YYYY-MM-DD
-          const year = today.getFullYear();
-          const month = String(today.getMonth() + 1).padStart(2, '0');
-          const day = String(today.getDate()).padStart(2, '0');
+          const year = currentDailyDate.getFullYear();
+          const month = String(currentDailyDate.getMonth() + 1).padStart(2, '0');
+          const day = String(currentDailyDate.getDate()).padStart(2, '0');
           const dateStr = `${year}-${month}-${day}`;
 
           const res = await authFetch(`${API}/api/daily-tasks?date=${dateStr}`);
@@ -541,6 +593,7 @@
             const result = await res.json();
             dailyTasks = result.data || [];
             renderDailyTasks();
+            loadDailyStats(); // Cập nhật bảng thống kê
           } else {
             throw new Error('Failed to load tasks');
           }
@@ -630,6 +683,7 @@
             dailyTasks.push(result.data);
             input.value = '';
             renderDailyTasks();
+            loadDailyStats();
             
             // Add a small satisfying pop animation to the progress bar
             const bar = document.getElementById('daily-tasks-progress-bar');
@@ -664,6 +718,7 @@
           if (!res.ok) {
             throw new Error('Failed to update');
           }
+          loadDailyStats(); // Cập nhật bảng thống kê
         } catch (error) {
           console.error(error);
           // Revert optimistic update
@@ -688,6 +743,7 @@
           if (!res.ok) {
             throw new Error('Failed to delete');
           }
+          loadDailyStats(); // Cập nhật bảng thống kê
         } catch (error) {
           console.error(error);
           // Revert optimistic update
