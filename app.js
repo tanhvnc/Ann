@@ -2793,6 +2793,7 @@
       const file = fileInput.files[0];
       const restaurantName = document.getElementById('food-review-restaurant').value.trim();
       const foodName = document.getElementById('food-review-food').value.trim();
+      const address = document.getElementById('food-review-address').value.trim();
       const reviewText = document.getElementById('food-review-text').value.trim();
       const rating = parseInt(document.getElementById('food-review-rating').value, 10);
 
@@ -2835,6 +2836,7 @@
         const reviewData = {
           user_id: user.id,
           restaurant_name: restaurantName,
+          address: address,
           food_name: foodName,
           rating: rating,
           review_text: reviewText,
@@ -2938,6 +2940,7 @@
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                     ${escapeHTML(review.restaurant_name)}
                   </p>
+                  ${review.address ? `<p class="text-xs text-slate-500 flex items-start gap-1 mt-1"><svg class="w-3 h-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg><span class="line-clamp-1">${escapeHTML(review.address)}</span></p>` : ''}
                 </div>
                 <div class="flex-shrink-0 bg-amber-50 px-2 py-1 rounded-lg border border-amber-100 flex items-center gap-1">
                   <span class="text-amber-500 text-xs">${starsHtml}</span>

@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS food_reviews (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id uuid REFERENCES auth.users NOT NULL,
   restaurant_name text NOT NULL,
+  address text,
   food_name text NOT NULL,
   rating integer NOT NULL CHECK (rating >= 1 AND rating <= 5),
   review_text text,
