@@ -86,6 +86,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
           <span class="text-[10px] font-semibold leading-none text-center">My Day</span>
         </button>
+        <button class="nav-btn flex-col gap-1 !h-auto py-2 w-[60px]" id="nav-food-reviews" onclick="switchView('food-reviews')" data-tooltip="Food Reviews">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"></path><path d="M7 2v20"></path><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"></path></svg>
+          <span class="text-[10px] font-semibold leading-none text-center">Food</span>
+        </button>
 
         <div style="flex:1"></div>
 
@@ -434,6 +438,41 @@
           </div>
         </div>
         
+        <!-- ═══════════════  VIEW: FOOD REVIEWS  ═══════════════ -->
+        <div id="view-food-reviews" class="hidden flex-col h-full min-h-[500px]">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-slate-800">My Food Diary</h2>
+            <button type="button" onclick="openModal('foodReviewModal')" class="rounded-2xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 shadow-sm flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+              Add Review
+            </button>
+          </div>
+          
+          <!-- Loading State for Reviews -->
+          <div id="food-reviews-loading" class="hidden flex items-center justify-center py-20 text-slate-400">
+            <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-indigo-500" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Loading your delicious memories...
+          </div>
+          
+          <!-- Grid for Reviews -->
+          <div id="food-reviews-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
+            <!-- Items will be injected here via JS -->
+          </div>
+          
+          <!-- Empty State -->
+          <div id="food-reviews-empty" class="hidden text-center py-20 bg-white rounded-3xl border border-slate-100 shadow-sm">
+            <div class="text-6xl mb-4">🍔</div>
+            <h3 class="text-lg font-bold text-slate-800 mb-2">No food reviews yet!</h3>
+            <p class="text-sm text-slate-500 max-w-md mx-auto mb-6">Start documenting your culinary journey. Snap a picture of your meal and share your thoughts.</p>
+            <button type="button" onclick="openModal('foodReviewModal')" class="rounded-2xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 shadow-sm">
+              Write Your First Review
+            </button>
+          </div>
+        </div>
+
         <!-- Extra whitespace at the bottom to indicate end of content -->
         <div class="h-24 sm:h-32 w-full flex-shrink-0"></div>
         </div> <!-- End of inner max-w-5xl container -->
@@ -564,6 +603,86 @@
             <button type="button" onclick="executePrint()" class="rounded-2xl bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition">Print Now</button>
           </div>
         </div>
+      </div>
+    </div>
+
+
+
+    <!-- ═══════════════  MODAL: FOOD REVIEW  ═══════════════ -->
+    <div id="foodReviewModal" class="modal-overlay">
+      <div class="modal-box bg-white/95 border border-white/40 dark:bg-slate-900/90 dark:border-white/5 max-w-lg">
+        <div class="mb-5 flex items-start justify-between">
+          <div>
+            <h3 class="text-lg font-bold text-slate-900">Add Food Review</h3>
+            <p class="text-sm text-slate-500 mt-0.5">Share your culinary experience.</p>
+          </div>
+          <button type="button" onclick="closeModal('foodReviewModal')" class="text-slate-400 hover:text-slate-700 text-xl leading-none">&times;</button>
+        </div>
+        <form id="food-review-form" class="space-y-4" onsubmit="event.preventDefault(); submitFoodReview();">
+          
+          <!-- Image Upload Area -->
+          <div class="w-full">
+            <label class="mb-1 block text-sm font-medium text-slate-700">Food Image (Required)</label>
+            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-2xl hover:border-indigo-400 hover:bg-indigo-50 transition-colors cursor-pointer relative overflow-hidden group" onclick="document.getElementById('food-review-image').click()" id="food-image-preview-container">
+              <div class="space-y-1 text-center relative z-10" id="food-image-placeholder">
+                <svg class="mx-auto h-12 w-12 text-slate-400 group-hover:text-indigo-500 transition-colors" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                  <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <div class="flex text-sm text-slate-600 justify-center">
+                  <span class="relative cursor-pointer bg-transparent rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                    <span>Upload a file</span>
+                  </span>
+                </div>
+                <p class="text-xs text-slate-500">PNG, JPG, GIF up to 5MB</p>
+              </div>
+              <img id="food-image-preview" class="hidden absolute inset-0 w-full h-full object-cover" src="" alt="Preview" />
+              <div id="food-image-loading" class="hidden absolute inset-0 bg-white/80 flex flex-col items-center justify-center z-20">
+                <svg class="animate-spin h-8 w-8 text-indigo-600 mb-2" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-sm font-semibold text-indigo-600">Uploading...</span>
+              </div>
+            </div>
+            <input type="file" id="food-review-image" class="hidden" accept="image/*" onchange="previewFoodImage(event)" required />
+            <!-- Hidden input to store uploaded URL -->
+            <input type="hidden" id="food-review-image-url" value="" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="mb-1 block text-sm font-medium text-slate-700">Restaurant Name</label>
+              <input id="food-review-restaurant" type="text" class="form-input" placeholder="e.g. Pizza Hut" required />
+            </div>
+            <div>
+              <label class="mb-1 block text-sm font-medium text-slate-700">Food Name</label>
+              <input id="food-review-food" type="text" class="form-input" placeholder="e.g. Pepperoni Pizza" required />
+            </div>
+          </div>
+          
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-700">Rating</label>
+            <div class="flex items-center gap-1" id="food-review-stars">
+              <button type="button" class="star-btn text-2xl text-slate-300 hover:text-amber-400 transition" onclick="setFoodRating(1)">★</button>
+              <button type="button" class="star-btn text-2xl text-slate-300 hover:text-amber-400 transition" onclick="setFoodRating(2)">★</button>
+              <button type="button" class="star-btn text-2xl text-slate-300 hover:text-amber-400 transition" onclick="setFoodRating(3)">★</button>
+              <button type="button" class="star-btn text-2xl text-slate-300 hover:text-amber-400 transition" onclick="setFoodRating(4)">★</button>
+              <button type="button" class="star-btn text-2xl text-slate-300 hover:text-amber-400 transition" onclick="setFoodRating(5)">★</button>
+            </div>
+            <input type="hidden" id="food-review-rating" value="0" required />
+            <div id="food-rating-error" class="hidden text-xs text-rose-500 mt-1">Please select a rating.</div>
+          </div>
+
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-700">Review</label>
+            <textarea id="food-review-text" rows="3" class="form-input resize-none" placeholder="What did you think about it?..." required></textarea>
+          </div>
+
+          <div class="pt-4 flex justify-end gap-3 border-t border-slate-100">
+            <button type="button" onclick="closeModal('foodReviewModal')" class="rounded-2xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 shadow-sm">Cancel</button>
+            <button type="submit" id="food-review-submit-btn" class="rounded-2xl bg-indigo-600 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-indigo-700 shadow-sm shadow-indigo-200">Post Review</button>
+          </div>
+        </form>
       </div>
     </div>
 
