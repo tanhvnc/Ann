@@ -2872,7 +2872,6 @@
 
     async function loadFoodReviews() {
       const user = currentUserSession?.user;
-      if (!user) return;
 
       const grid = document.getElementById('food-reviews-grid');
       const emptyState = document.getElementById('food-reviews-empty');
@@ -2886,7 +2885,6 @@
         const { data: reviews, error } = await supabaseClient
           .from('food_reviews')
           .select('*')
-          .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -2908,6 +2906,8 @@
     function renderFoodReviews(reviews) {
       const grid = document.getElementById('food-reviews-grid');
       if (!grid) return;
+      
+      const user = currentUserSession?.user;
       
       let html = '';
       reviews.forEach(review => {
@@ -2948,9 +2948,11 @@
               </div>
               <p class="text-slate-600 text-sm mt-3 flex-1 line-clamp-3 leading-relaxed">${escapeHTML(review.review_text)}</p>
               
+              ${user && user.id === review.user_id ? `
               <button onclick="deleteFoodReview('${review.id}')" class="mt-4 self-end text-xs font-semibold text-rose-500 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
                 Delete
               </button>
+              ` : ''}
             </div>
           </div>
         `;

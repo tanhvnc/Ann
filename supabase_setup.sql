@@ -16,11 +16,13 @@ CREATE TABLE IF NOT EXISTS food_reviews (
 -- 2. Setup Row Level Security (RLS) for food_reviews table
 ALTER TABLE food_reviews ENABLE ROW LEVEL SECURITY;
 
--- Allow users to view only their own reviews
-CREATE POLICY "Users can view their own food reviews"
+-- Allow everyone to view food reviews
+DROP POLICY IF EXISTS "Users can view their own food reviews" ON food_reviews;
+DROP POLICY IF EXISTS "Everyone can view food reviews" ON food_reviews;
+CREATE POLICY "Everyone can view food reviews"
   ON food_reviews
   FOR SELECT
-  USING (auth.uid() = user_id);
+  USING (true);
 
 -- Allow users to insert their own reviews
 CREATE POLICY "Users can insert their own food reviews"
