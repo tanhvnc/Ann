@@ -28,12 +28,14 @@ CREATE POLICY "Everyone can view food reviews"
   USING (true);
 
 -- Allow users to insert their own reviews
+DROP POLICY IF EXISTS "Users can insert their own food reviews" ON food_reviews;
 CREATE POLICY "Users can insert their own food reviews"
   ON food_reviews
   FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
 -- Allow users to delete their own reviews
+DROP POLICY IF EXISTS "Users can delete their own food reviews" ON food_reviews;
 CREATE POLICY "Users can delete their own food reviews"
   ON food_reviews
   FOR DELETE
@@ -47,11 +49,13 @@ ON CONFLICT (id) DO NOTHING;
 
 -- 4. Setup Storage RLS Policies for food_reviews bucket
 -- Cho phép mọi người xem ảnh (public)
+DROP POLICY IF EXISTS "Public Access" ON storage.objects;
 CREATE POLICY "Public Access" 
   ON storage.objects FOR SELECT 
   USING (bucket_id = 'food_reviews');
 
 -- Chỉ cho phép user đã đăng nhập upload ảnh vào thư mục của họ
+DROP POLICY IF EXISTS "Authenticated users can upload images" ON storage.objects;
 CREATE POLICY "Authenticated users can upload images" 
   ON storage.objects FOR INSERT 
   WITH CHECK (
@@ -61,6 +65,7 @@ CREATE POLICY "Authenticated users can upload images"
   );
 
 -- Chỉ cho phép user xóa ảnh của chính họ
+DROP POLICY IF EXISTS "Users can delete their own images" ON storage.objects;
 CREATE POLICY "Users can delete their own images" 
   ON storage.objects FOR DELETE 
   USING (
