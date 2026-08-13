@@ -13,6 +13,9 @@ CREATE TABLE IF NOT EXISTS food_reviews (
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- Ensure address column exists in case the table was created before it was added
+ALTER TABLE food_reviews ADD COLUMN IF NOT EXISTS address text;
+
 -- 2. Setup Row Level Security (RLS) for food_reviews table
 ALTER TABLE food_reviews ENABLE ROW LEVEL SECURITY;
 
@@ -65,3 +68,6 @@ CREATE POLICY "Users can delete their own images"
     auth.role() = 'authenticated' AND 
     (storage.foldername(name))[1] = auth.uid()::text
   );
+
+-- 5. Reload Schema Cache (Fixes "Could not find column in schema cache" error)
+NOTIFY pgrst, reload_schema;
