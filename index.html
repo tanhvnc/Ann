@@ -442,7 +442,7 @@
         <div id="view-food-reviews" class="hidden flex-col h-full min-h-[500px]">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-2xl font-bold text-slate-800">My Food Diary</h2>
-            <button type="button" onclick="openModal('foodReviewModal')" class="rounded-2xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 shadow-sm flex items-center gap-2">
+            <button type="button" onclick="openAddFoodReview()" class="rounded-2xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 shadow-sm flex items-center gap-2">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
               Add Review
             </button>
@@ -467,7 +467,7 @@
             <div class="text-6xl mb-4">🍔</div>
             <h3 class="text-lg font-bold text-slate-800 mb-2">No food reviews yet!</h3>
             <p class="text-sm text-slate-500 max-w-md mx-auto mb-6">Start documenting your culinary journey. Snap a picture of your meal and share your thoughts.</p>
-            <button type="button" onclick="openModal('foodReviewModal')" class="rounded-2xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 shadow-sm">
+            <button type="button" onclick="openAddFoodReview()" class="rounded-2xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 shadow-sm">
               Write Your First Review
             </button>
           </div>
@@ -613,12 +613,13 @@
       <div class="modal-box bg-white/95 border border-white/40 dark:bg-slate-900/90 dark:border-white/5 max-w-lg">
         <div class="mb-5 flex items-start justify-between">
           <div>
-            <h3 class="text-lg font-bold text-slate-900">Add Food Review</h3>
-            <p class="text-sm text-slate-500 mt-0.5">Share your culinary experience.</p>
+            <h3 id="food-review-modal-title" class="text-lg font-bold text-slate-900">Add Food Review</h3>
+            <p id="food-review-modal-desc" class="text-sm text-slate-500 mt-0.5">Share your culinary experience.</p>
           </div>
           <button type="button" onclick="closeModal('foodReviewModal')" class="text-slate-400 hover:text-slate-700 text-xl leading-none">&times;</button>
         </div>
         <form id="food-review-form" class="space-y-4" onsubmit="event.preventDefault(); submitFoodReview();">
+          <input type="hidden" id="food-review-edit-id" value="" />
           
           <!-- Image Upload Area -->
           <div class="w-full">

@@ -2749,6 +2749,21 @@
        FOOD REVIEWS
        ═══════════════════════════ */
     
+    function openAddFoodReview() {
+      // Reset form to Add mode
+      document.getElementById('food-review-form').reset();
+      document.getElementById('food-review-edit-id').value = '';
+      document.getElementById('food-review-image-url').value = '';
+      document.getElementById('food-review-modal-title').textContent = 'Add Food Review';
+      document.getElementById('food-review-modal-desc').textContent = 'Share your culinary experience.';
+      document.getElementById('food-review-submit-btn').textContent = 'Post Review';
+      document.getElementById('food-review-image').setAttribute('required', '');
+      setFoodRating(0);
+      document.getElementById('food-image-preview').classList.add('hidden');
+      document.getElementById('food-image-placeholder').classList.remove('hidden');
+      openModal('foodReviewModal');
+    }
+
     function setFoodRating(rating) {
       document.getElementById('food-review-rating').value = rating;
       const stars = document.getElementById('food-review-stars').querySelectorAll('.star-btn');
@@ -2789,6 +2804,9 @@
         return;
       }
 
+      const editId = document.getElementById('food-review-edit-id').value;
+      const isEditing = !!editId;
+
       const fileInput = document.getElementById('food-review-image');
       const file = fileInput.files[0];
       const restaurantName = document.getElementById('food-review-restaurant').value.trim();
@@ -2799,7 +2817,7 @@
       const reviewText = document.getElementById('food-review-text').value.trim();
       const rating = parseInt(document.getElementById('food-review-rating').value, 10);
 
-      if (!file) {
+      if (!isEditing && !file) {
         showToast('Please upload an image of the food.', 'error');
         return;
       }
@@ -2812,63 +2830,82 @@
       const loadingOverlay = document.getElementById('food-image-loading');
       
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Posting...';
-      loadingOverlay.classList.remove('hidden');
+      submitBtn.textContent = isEditing ? 'Saving...' : 'Posting...';
+      if (file) loadingOverlay.classList.remove('hidden');
 
       try {
-        let imageUrl = '';
+        let imageUrl = document.getElementById('food-review-image-url').value || '';
         
-        // Upload Image
-        const fileExt = file.name.split('.').pop();
-        const filePath = `${user.id}/${Date.now()}.${fileExt}`;
-        
-        const { data: uploadData, error: uploadError } = await supabaseClient.storage
-          .from('food_reviews')
-          .upload(filePath, file, { upsert: false });
+        // Upload new image if a file was selected
+        if (file) {
+          const fileExt = file.name.split('.').pop();
+          const filePath = `${user.id}/${Date.now()}.${fileExt}`;
           
-        if (uploadError) throw uploadError;
-        
-        const { data: publicUrlData } = supabaseClient.storage
-          .from('food_reviews')
-          .getPublicUrl(filePath);
+          const { data: uploadData, error: uploadError } = await supabaseClient.storage
+            .from('food_reviews')
+            .upload(filePath, file, { upsert: false });
+            
+          if (uploadError) throw uploadError;
           
-        imageUrl = publicUrlData.publicUrl;
+          const { data: publicUrlData } = supabaseClient.storage
+            .from('food_reviews')
+            .getPublicUrl(filePath);
+            
+          imageUrl = publicUrlData.publicUrl;
+        }
 
-        // Save Review Data
         const reviewData = {
-          user_id: user.id,
           restaurant_name: restaurantName,
           address: address,
           food_name: foodName,
           rating: rating,
           review_text: reviewText,
-          image_url: imageUrl,
           price: price
         };
 
-        const { error: dbError } = await supabaseClient
-          .from('food_reviews')
-          .insert([reviewData]);
+        if (isEditing) {
+          // Update existing review
+          if (imageUrl) reviewData.image_url = imageUrl;
+          
+          const { error: dbError } = await supabaseClient
+            .from('food_reviews')
+            .update(reviewData)
+            .eq('id', editId)
+            .eq('user_id', user.id);
 
-        if (dbError) throw dbError;
+          if (dbError) throw dbError;
+          showToast('Review updated successfully!', 'success');
+        } else {
+          // Insert new review
+          reviewData.user_id = user.id;
+          reviewData.image_url = imageUrl;
 
-        showToast('Food review posted successfully!', 'success');
+          const { error: dbError } = await supabaseClient
+            .from('food_reviews')
+            .insert([reviewData]);
+
+          if (dbError) throw dbError;
+          showToast('Food review posted successfully!', 'success');
+        }
+
         closeModal('foodReviewModal');
         
         // Reset form
         document.getElementById('food-review-form').reset();
+        document.getElementById('food-review-edit-id').value = '';
         setFoodRating(0);
         document.getElementById('food-image-preview').classList.add('hidden');
         document.getElementById('food-image-placeholder').classList.remove('hidden');
+        document.getElementById('food-review-image-url').value = '';
         
         loadFoodReviews(); // Refresh list
 
       } catch (error) {
-        console.error('Error posting review:', error);
-        showToast('Failed to post review: ' + error.message, 'error');
+        console.error('Error saving review:', error);
+        showToast('Failed to save review: ' + error.message, 'error');
       } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Post Review';
+        submitBtn.textContent = isEditing ? 'Save Changes' : 'Post Review';
         loadingOverlay.classList.add('hidden');
       }
     }
@@ -2940,7 +2977,7 @@
                 <div>
                   <h3 class="font-bold text-slate-800 text-lg leading-tight line-clamp-1">${escapeHTML(review.food_name)}</h3>
                   <p class="text-sm text-indigo-600 font-medium flex items-center gap-1 mt-0.5">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"></path></svg>
                     ${escapeHTML(review.restaurant_name)}
                   </p>
                   ${review.address ? `<p class="text-xs text-slate-500 flex items-start gap-1 mt-1"><svg class="w-3 h-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg><span class="line-clamp-1">${escapeHTML(review.address)}</span></p>` : ''}
@@ -2953,9 +2990,14 @@
               <p class="text-slate-600 text-sm mt-3 flex-1 line-clamp-3 leading-relaxed">${escapeHTML(review.review_text)}</p>
               
               ${user && user.id === review.user_id ? `
-              <button onclick="deleteFoodReview('${review.id}')" class="mt-4 self-end text-xs font-semibold text-rose-500 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
-                Delete
-              </button>
+              <div class="mt-4 flex items-center gap-2 self-end opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onclick="editFoodReview('${review.id}')" class="text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors">
+                  Edit
+                </button>
+                <button onclick="deleteFoodReview('${review.id}')" class="text-xs font-semibold text-rose-500 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition-colors">
+                  Delete
+                </button>
+              </div>
               ` : ''}
             </div>
           </div>
@@ -2964,6 +3006,50 @@
       grid.innerHTML = html;
     }
     
+    async function editFoodReview(reviewId) {
+      try {
+        const { data: review, error } = await supabaseClient
+          .from('food_reviews')
+          .select('*')
+          .eq('id', reviewId)
+          .single();
+
+        if (error) throw error;
+
+        // Set modal to edit mode
+        document.getElementById('food-review-modal-title').textContent = 'Edit Food Review';
+        document.getElementById('food-review-modal-desc').textContent = 'Update your review details.';
+        document.getElementById('food-review-submit-btn').textContent = 'Save Changes';
+
+        // Populate form
+        document.getElementById('food-review-edit-id').value = review.id;
+        document.getElementById('food-review-restaurant').value = review.restaurant_name || '';
+        document.getElementById('food-review-food').value = review.food_name || '';
+        document.getElementById('food-review-address').value = review.address || '';
+        document.getElementById('food-review-price').value = review.price || '';
+        document.getElementById('food-review-text').value = review.review_text || '';
+        document.getElementById('food-review-image-url').value = review.image_url || '';
+        setFoodRating(review.rating || 0);
+
+        // Show existing image preview
+        if (review.image_url) {
+          const previewImg = document.getElementById('food-image-preview');
+          const placeholder = document.getElementById('food-image-placeholder');
+          previewImg.src = review.image_url;
+          previewImg.classList.remove('hidden');
+          placeholder.classList.add('hidden');
+        }
+
+        // Remove required from file input for edit mode
+        document.getElementById('food-review-image').removeAttribute('required');
+
+        openModal('foodReviewModal');
+      } catch (error) {
+        console.error('Error loading review for edit:', error);
+        showToast('Failed to load review data.', 'error');
+      }
+    }
+
     async function deleteFoodReview(reviewId) {
       const confirmed = await customConfirm('Delete Review', 'Are you sure you want to delete this food review?', { confirmText: 'Delete', isDestructive: true });
       if (!confirmed) return;

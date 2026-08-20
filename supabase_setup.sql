@@ -44,6 +44,14 @@ CREATE POLICY "Users can delete their own food reviews"
   FOR DELETE
   USING (auth.uid() = user_id);
 
+-- Allow users to update their own reviews
+DROP POLICY IF EXISTS "Users can update their own food reviews" ON food_reviews;
+CREATE POLICY "Users can update their own food reviews"
+  ON food_reviews
+  FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
 -- 3. Create the storage bucket (If not created via UI)
 -- (Lưu ý: Storage buckets thường được tạo qua UI cho dễ, nhưng nếu dùng SQL thì dùng lệnh dưới)
 INSERT INTO storage.buckets (id, name, public) 
