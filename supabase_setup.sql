@@ -16,6 +16,9 @@ CREATE TABLE IF NOT EXISTS food_reviews (
 -- Ensure address column exists in case the table was created before it was added
 ALTER TABLE food_reviews ADD COLUMN IF NOT EXISTS address text;
 
+-- Ensure price column exists
+ALTER TABLE food_reviews ADD COLUMN IF NOT EXISTS price numeric;
+
 -- 2. Setup Row Level Security (RLS) for food_reviews table
 ALTER TABLE food_reviews ENABLE ROW LEVEL SECURITY;
 

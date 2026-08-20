@@ -2794,6 +2794,8 @@
       const restaurantName = document.getElementById('food-review-restaurant').value.trim();
       const foodName = document.getElementById('food-review-food').value.trim();
       const address = document.getElementById('food-review-address').value.trim();
+      const priceVal = document.getElementById('food-review-price').value.trim();
+      const price = priceVal ? parseFloat(priceVal) : null;
       const reviewText = document.getElementById('food-review-text').value.trim();
       const rating = parseInt(document.getElementById('food-review-rating').value, 10);
 
@@ -2840,7 +2842,8 @@
           food_name: foodName,
           rating: rating,
           review_text: reviewText,
-          image_url: imageUrl
+          image_url: imageUrl,
+          price: price
         };
 
         const { error: dbError } = await supabaseClient
@@ -2946,6 +2949,7 @@
                   <span class="text-amber-500 text-xs">${starsHtml}</span>
                 </div>
               </div>
+              ${review.price ? `<div class="flex items-center gap-1.5 mt-1 mb-1"><span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded-lg border border-emerald-100"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>${Number(review.price).toLocaleString('vi-VN')}₫</span></div>` : ''}
               <p class="text-slate-600 text-sm mt-3 flex-1 line-clamp-3 leading-relaxed">${escapeHTML(review.review_text)}</p>
               
               ${user && user.id === review.user_id ? `
